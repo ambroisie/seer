@@ -1,0 +1,214 @@
+use super::Bitboard;
+
+/// Represent a square on a chessboard. Defined in the same order as the
+/// [Bitboard](crate::board::Bitboard) squares.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[rustfmt::skip]
+pub enum Square {
+    A1, A2, A3, A4, A5, A6, A7, A8,
+    B1, B2, B3, B4, B5, B6, B7, B8,
+    C1, C2, C3, C4, C5, C6, C7, C8,
+    D1, D2, D3, D4, D5, D6, D7, D8,
+    E1, E2, E3, E4, E5, E6, E7, E8,
+    F1, F2, F3, F4, F5, F6, F7, F8,
+    G1, G2, G3, G4, G5, G6, G7, G8,
+    H1, H2, H3, H4, H5, H6, H7, H8,
+}
+
+impl std::fmt::Display for Square {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl Square {
+    #[rustfmt::skip]
+    const ALL: [Self; 64] = [
+        Self::A1, Self::A2, Self::A3, Self::A4, Self::A5, Self::A6, Self::A7, Self::A8,
+        Self::B1, Self::B2, Self::B3, Self::B4, Self::B5, Self::B6, Self::B7, Self::B8,
+        Self::C1, Self::C2, Self::C3, Self::C4, Self::C5, Self::C6, Self::C7, Self::C8,
+        Self::D1, Self::D2, Self::D3, Self::D4, Self::D5, Self::D6, Self::D7, Self::D8,
+        Self::E1, Self::E2, Self::E3, Self::E4, Self::E5, Self::E6, Self::E7, Self::E8,
+        Self::F1, Self::F2, Self::F3, Self::F4, Self::F5, Self::F6, Self::F7, Self::F8,
+        Self::G1, Self::G2, Self::G3, Self::G4, Self::G5, Self::G6, Self::G7, Self::G8,
+        Self::H1, Self::H2, Self::H3, Self::H4, Self::H5, Self::H6, Self::H7, Self::H8,
+    ];
+
+    /// Iterate over all squares in order.
+    pub fn iter() -> impl Iterator<Item = Square> {
+        Self::ALL.iter().cloned()
+    }
+
+    /// Convert from a square index into a [Square] type.
+    #[inline(always)]
+    pub fn from_index(index: usize) -> Self {
+        assert!(index < 64);
+        // SAFETY: we know the value is in-bounds
+        unsafe { Self::from_index_unchecked(index) }
+    }
+
+    /// Convert from a square index into a [Square] type, no bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Should only be called with values that can be output by [Square::index()].
+    #[inline(always)]
+    pub unsafe fn from_index_unchecked(index: usize) -> Self {
+        std::mem::transmute(index as u8)
+    }
+
+    /// Return the index of the rank of this square (0 -> rank 1, ..., 7 -> rank 8).
+    #[inline(always)]
+    pub fn rank_index(self) -> usize {
+        (self as usize) % 8
+    }
+
+    /// Return the index of the rank of this square (0 -> file A, ..., 7 -> file H).
+    #[inline(always)]
+    pub fn file_index(self) -> usize {
+        (self as usize) / 8
+    }
+
+    /// Return a bitboard representing the rank of this square.
+    #[inline(always)]
+    pub fn rank(self) -> Bitboard {
+        Bitboard::RANKS[self.rank_index()]
+    }
+
+    /// Return a bitboard representing the rank of this square.
+    #[inline(always)]
+    pub fn file(self) -> Bitboard {
+        Bitboard::FILES[self.file_index()]
+    }
+
+    /// Turn a square into a singleton bitboard.
+    #[inline(always)]
+    pub fn into_bitboard(self) -> Bitboard {
+        Bitboard(1 << (self as usize))
+    }
+}
+
+/// Shift the square's index left by the amount given.
+impl std::ops::Shl<usize> for Square {
+    type Output = Square;
+
+    #[inline(always)]
+    fn shl(self, rhs: usize) -> Self::Output {
+        #[allow(clippy::suspicious_arithmetic_impl)]
+        Square::from_index(self as usize + rhs)
+    }
+}
+
+/// Shift the square's index right by the amount given.
+impl std::ops::Shr<usize> for Square {
+    type Output = Square;
+
+    #[inline(always)]
+    fn shr(self, rhs: usize) -> Self::Output {
+        #[allow(clippy::suspicious_arithmetic_impl)]
+        Square::from_index(self as usize - rhs)
+    }
+}
+
+/// Return a board containing all squares but the one given.
+impl std::ops::Not for Square {
+    type Output = Bitboard;
+
+    #[inline(always)]
+    fn not(self) -> Self::Output {
+        !self.into_bitboard()
+    }
+}
+
+/// Treat the square as a singleton board, and apply the operator.
+impl std::ops::BitOr<Square> for Square {
+    type Output = Bitboard;
+
+    #[inline(always)]
+    fn bitor(self, rhs: Square) -> Self::Output {
+        self.into_bitboard() | rhs.into_bitboard()
+    }
+}
+
+/// Treat the square as a singleton board, and apply the operator.
+impl std::ops::BitOr<Bitboard> for Square {
+    type Output = Bitboard;
+
+    #[inline(always)]
+    fn bitor(self, rhs: Bitboard) -> Self::Output {
+        self.into_bitboard() | rhs
+    }
+}
+
+/// Treat the square as a singleton board, and apply the operator.
+impl std::ops::BitAnd<Bitboard> for Square {
+    type Output = Bitboard;
+
+    #[inline(always)]
+    fn bitand(self, rhs: Bitboard) -> Self::Output {
+        self.into_bitboard() & rhs
+    }
+}
+
+/// Treat the square as a singleton board, and apply the operator.
+impl std::ops::BitXor<Bitboard> for Square {
+    type Output = Bitboard;
+
+    #[inline(always)]
+    fn bitxor(self, rhs: Bitboard) -> Self::Output {
+        self.into_bitboard() ^ rhs
+    }
+}
+
+/// Treat the square as a singleton board, and apply the operator.
+impl std::ops::Sub<Bitboard> for Square {
+    type Output = Bitboard;
+
+    #[inline(always)]
+    fn sub(self, rhs: Bitboard) -> Self::Output {
+        self.into_bitboard() - rhs
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::board::bitboard::*;
+
+    #[test]
+    fn left_shift() {
+        assert_eq!(Square::A1 << 1, Square::A2);
+        assert_eq!(Square::A1 << 8, Square::B1);
+    }
+
+    #[test]
+    fn right_shift() {
+        assert_eq!(Square::A2 >> 1, Square::A1);
+        assert_eq!(Square::B1 >> 8, Square::A1);
+    }
+
+    #[test]
+    fn not() {
+        assert_eq!(!Square::A1, Bitboard(u64::MAX - 1));
+    }
+
+    #[test]
+    fn or() {
+        assert_eq!(Square::A1 | Square::A2, Bitboard(0b11));
+    }
+
+    #[test]
+    fn and() {
+        assert_eq!(Square::A1 & Bitboard::FILES[0], Square::A1.into_bitboard());
+    }
+
+    #[test]
+    fn xor() {
+        assert_eq!(Square::A1 ^ Bitboard::FILES[0], Bitboard(0xff - 1));
+    }
+
+    #[test]
+    fn sub() {
+        assert_eq!(Square::A1 - Bitboard::FILES[0], Bitboard::EMPTY);
+    }
+}
