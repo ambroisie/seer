@@ -1,4 +1,6 @@
 use super::Square;
+mod iterator;
+use iterator::*;
 
 /// Use a 64-bit number to represent a chessboard. Each bit is mapped from to a specific square, so
 /// that index 0 -> A1, 1 -> A2, ..., 63 -> H8.
@@ -37,6 +39,16 @@ impl Bitboard {
 impl Default for Bitboard {
     fn default() -> Self {
         Self::EMPTY
+    }
+}
+
+/// Iterate over the [Square](crate::board::Square) values included in the board.
+impl IntoIterator for Bitboard {
+    type IntoIter = BitboardIterator;
+    type Item = Square;
+
+    fn into_iter(self) -> Self::IntoIter {
+        BitboardIterator(self.0)
     }
 }
 
@@ -154,6 +166,37 @@ impl std::ops::Sub<Square> for Bitboard {
 mod test {
     use super::*;
     use crate::board::square::*;
+
+    #[test]
+    fn iter() {
+        assert_eq!(Bitboard::EMPTY.into_iter().collect::<Vec<_>>(), Vec::new());
+        assert_eq!(
+            Bitboard::RANKS[0].into_iter().collect::<Vec<_>>(),
+            vec![
+                Square::A1,
+                Square::B1,
+                Square::C1,
+                Square::D1,
+                Square::E1,
+                Square::F1,
+                Square::G1,
+                Square::H1,
+            ]
+        );
+        assert_eq!(
+            Bitboard::FILES[0].into_iter().collect::<Vec<_>>(),
+            vec![
+                Square::A1,
+                Square::A2,
+                Square::A3,
+                Square::A4,
+                Square::A5,
+                Square::A6,
+                Square::A7,
+                Square::A8,
+            ]
+        );
+    }
 
     #[test]
     fn left_shift() {
