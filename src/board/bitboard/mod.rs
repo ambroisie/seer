@@ -11,6 +11,9 @@ impl Bitboard {
     /// An empty bitboard.
     pub const EMPTY: Bitboard = Bitboard(0);
 
+    /// A full bitboard.
+    pub const ALL: Bitboard = Bitboard(u64::MAX);
+
     /// Array of bitboards representing the eight ranks, in order from rank 1 to rank 8.
     pub const RANKS: [Self; 8] = [
         Bitboard(0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001),
@@ -212,7 +215,7 @@ mod test {
 
     #[test]
     fn not() {
-        assert_eq!(!Bitboard::EMPTY, Bitboard(u64::MAX));
+        assert_eq!(!Bitboard::EMPTY, Bitboard::ALL);
     }
 
     #[test]
