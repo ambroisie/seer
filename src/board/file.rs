@@ -54,6 +54,18 @@ impl File {
         self as usize
     }
 
+    /// Return the [File] to the left, as seen from white's perspective. Wraps around the board.
+    pub fn left(self) -> Self {
+        // SAFETY: we know the value is in-bounds, through masking
+        unsafe { Self::from_index_unchecked(self.index().wrapping_sub(1) & 7) }
+    }
+
+    /// Return the [File] to the right, as seen from white's perspective. Wraps around the board.
+    pub fn right(self) -> Self {
+        // SAFETY: we know the value is in-bounds, through masking
+        unsafe { Self::from_index_unchecked(self.index().wrapping_add(1) & 7) }
+    }
+
     /// Turn a [File] into a [Bitboard] of all squares in that file.
     #[inline(always)]
     pub fn into_bitboard(self) -> Bitboard {
@@ -78,6 +90,20 @@ mod test {
         assert_eq!(File::A.index(), 0);
         assert_eq!(File::B.index(), 1);
         assert_eq!(File::H.index(), 7);
+    }
+
+    #[test]
+    fn left() {
+        assert_eq!(File::A.left(), File::H);
+        assert_eq!(File::B.left(), File::A);
+        assert_eq!(File::H.left(), File::G);
+    }
+
+    #[test]
+    fn right() {
+        assert_eq!(File::A.right(), File::B);
+        assert_eq!(File::B.right(), File::C);
+        assert_eq!(File::H.right(), File::A);
     }
 
     #[test]
