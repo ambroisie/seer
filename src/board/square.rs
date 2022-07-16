@@ -1,4 +1,4 @@
-use super::Bitboard;
+use super::{Bitboard, File, Rank};
 
 /// Represent a square on a chessboard. Defined in the same order as the
 /// [Bitboard](crate::board::Bitboard) squares.
@@ -69,16 +69,18 @@ impl Square {
         (self as usize) / 8
     }
 
-    /// Return a bitboard representing the rank of this square.
+    /// Return a [Rank] representing the rank of this square.
     #[inline(always)]
-    pub fn rank(self) -> Bitboard {
-        Bitboard::RANKS[self.rank_index()]
+    pub fn rank(self) -> Rank {
+        // SAFETY: we know the value is in-bounds
+        unsafe { Rank::from_index_unchecked(self.rank_index()) }
     }
 
-    /// Return a bitboard representing the rank of this square.
+    /// Return a [File] representing the rank of this square.
     #[inline(always)]
-    pub fn file(self) -> Bitboard {
-        Bitboard::FILES[self.file_index()]
+    pub fn file(self) -> File {
+        // SAFETY: we know the value is in-bounds
+        unsafe { File::from_index_unchecked(self.file_index()) }
     }
 
     /// Turn a square into a singleton bitboard.
@@ -174,6 +176,24 @@ impl std::ops::Sub<Bitboard> for Square {
 mod test {
     use super::*;
     use crate::board::bitboard::*;
+    use crate::board::file::*;
+    use crate::board::rank::*;
+
+    #[test]
+    fn file() {
+        assert_eq!(Square::A1.file(), File::A);
+        assert_eq!(Square::A2.file(), File::A);
+        assert_eq!(Square::B1.file(), File::B);
+        assert_eq!(Square::H8.file(), File::H);
+    }
+
+    #[test]
+    fn rank() {
+        assert_eq!(Square::A1.rank(), Rank::First);
+        assert_eq!(Square::A2.rank(), Rank::Second);
+        assert_eq!(Square::B1.rank(), Rank::First);
+        assert_eq!(Square::H8.rank(), Rank::Eighth);
+    }
 
     #[test]
     fn left_shift() {
