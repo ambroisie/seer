@@ -34,6 +34,13 @@ impl Square {
         Self::H1, Self::H2, Self::H3, Self::H4, Self::H5, Self::H6, Self::H7, Self::H8,
     ];
 
+    /// Construct a [Square] from a [File] and [Rank].
+    #[inline(always)]
+    pub fn new(file: File, rank: Rank) -> Self {
+        // SAFETY: we know the value is in-bounds
+        unsafe { Self::from_index_unchecked(file.index() * 8 + rank.index()) }
+    }
+
     /// Iterate over all squares in order.
     pub fn iter() -> impl Iterator<Item = Square> {
         Self::ALL.iter().cloned()
@@ -172,6 +179,14 @@ mod test {
     use crate::board::bitboard::*;
     use crate::board::file::*;
     use crate::board::rank::*;
+
+    #[test]
+    fn new() {
+        assert_eq!(Square::new(File::A, Rank::First), Square::A1);
+        assert_eq!(Square::new(File::A, Rank::Second), Square::A2);
+        assert_eq!(Square::new(File::B, Rank::First), Square::B1);
+        assert_eq!(Square::new(File::H, Rank::Eighth), Square::H8);
+    }
 
     #[test]
     fn file() {
