@@ -54,6 +54,18 @@ impl Rank {
         self as usize
     }
 
+    /// Return the [Rank] one-row up, as seen from white's perspective. Wraps around the board.
+    pub fn up(self) -> Self {
+        // SAFETY: we know the value is in-bounds, through masking
+        unsafe { Self::from_index_unchecked(self.index().wrapping_add(1) & 7) }
+    }
+
+    /// Return the [Rank] one-row down, as seen from white's perspective. Wraps around the board.
+    pub fn down(self) -> Self {
+        // SAFETY: we know the value is in-bounds, through masking
+        unsafe { Self::from_index_unchecked(self.index().wrapping_sub(1) & 7) }
+    }
+
     /// Turn a [Rank] into a [Bitboard] of all squares in that rank.
     #[inline(always)]
     pub fn into_bitboard(self) -> Bitboard {
@@ -78,6 +90,20 @@ mod test {
         assert_eq!(Rank::First.index(), 0);
         assert_eq!(Rank::Second.index(), 1);
         assert_eq!(Rank::Eighth.index(), 7);
+    }
+
+    #[test]
+    fn up() {
+        assert_eq!(Rank::First.up(), Rank::Second);
+        assert_eq!(Rank::Second.up(), Rank::Third);
+        assert_eq!(Rank::Eighth.up(), Rank::First);
+    }
+
+    #[test]
+    fn down() {
+        assert_eq!(Rank::First.down(), Rank::Eighth);
+        assert_eq!(Rank::Second.down(), Rank::First);
+        assert_eq!(Rank::Eighth.down(), Rank::Seventh);
     }
 
     #[test]
