@@ -69,13 +69,13 @@ impl Square {
     /// Return the index of the rank of this square (0 -> rank 1, ..., 7 -> rank 8).
     #[inline(always)]
     pub fn rank_index(self) -> usize {
-        (self as usize) % 8
+        self.index() % 8
     }
 
     /// Return the index of the rank of this square (0 -> file A, ..., 7 -> file H).
     #[inline(always)]
     pub fn file_index(self) -> usize {
-        (self as usize) / 8
+        self.index() / 8
     }
 
     /// Return a [Rank] representing the rank of this square.
