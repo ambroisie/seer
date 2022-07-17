@@ -49,6 +49,12 @@ impl Bitboard {
     pub fn count(self) -> u32 {
         self.0.count_ones()
     }
+
+    /// Return true if there are no pieces in the [Bitboard], otherwise false.
+    #[inline(always)]
+    pub fn is_empty(self) -> bool {
+        self == Self::EMPTY
+    }
 }
 
 impl Default for Bitboard {
