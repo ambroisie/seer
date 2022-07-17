@@ -126,7 +126,7 @@ impl Direction {
 
         let mut res = Default::default();
 
-        while board != Bitboard::EMPTY {
+        while !board.is_empty() {
             board = self.move_board(board);
             res = res | board;
         }
