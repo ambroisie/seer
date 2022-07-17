@@ -1,6 +1,9 @@
 pub mod bitboard;
 pub use bitboard::*;
 
+pub mod directions;
+pub use directions::*;
+
 pub mod file;
 pub use file::*;
 
