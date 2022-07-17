@@ -44,6 +44,12 @@ impl Bitboard {
     /// The diagonal from [Square::A8] to [Square::H1].
     pub const ANTI_DIAGONAL: Bitboard = Bitboard(0x0102040810204080);
 
+    /// The light [Square]s on a board, e.g: [Square::H1].
+    pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55AA55AA55AA55AA);
+
+    /// The dark [Square]s on a board, e.g: [Square::A1].
+    pub const DARK_SQUARES: Bitboard = Bitboard(0x55AA55AA55AA55AA);
+
     /// Count the number of pieces in the [Bitboard].
     #[inline(always)]
     pub fn count(self) -> u32 {
