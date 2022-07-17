@@ -24,6 +24,49 @@ pub enum Direction {
 }
 
 impl Direction {
+    /// Directions that a rook could use.
+    pub const ROOK_DIRECTIONS: [Self; 4] = [Self::North, Self::West, Self::South, Self::East];
+
+    /// Directions that a bishop could use.
+    pub const BISHOP_DIRECTIONS: [Self; 4] = [
+        Self::NorthWest,
+        Self::SouthWest,
+        Self::SouthEast,
+        Self::NorthEast,
+    ];
+
+    /// Directions that a knight could use.
+    pub const KNIGHT_DIRECTIONS: [Self; 8] = [
+        Self::NorthNorthWest,
+        Self::NorthWestWest,
+        Self::SouthWestWest,
+        Self::SouthSouthWest,
+        Self::SouthSouthEast,
+        Self::SouthEastEast,
+        Self::NorthEastEast,
+        Self::NorthNorthEast,
+    ];
+
+    /// Iterate over all directions a rook can take.
+    pub fn iter_rook() -> impl Iterator<Item = Direction> {
+        Self::ROOK_DIRECTIONS.iter().cloned()
+    }
+
+    /// Iterate over all directions a bishop can take.
+    pub fn iter_bishop() -> impl Iterator<Item = Direction> {
+        Self::BISHOP_DIRECTIONS.iter().cloned()
+    }
+
+    /// Iterate over all directions a queen or king can take.
+    pub fn iter_royalty() -> impl Iterator<Item = Direction> {
+        Self::iter_rook().chain(Self::iter_bishop())
+    }
+
+    /// Iterate over all directions a knight can take.
+    pub fn iter_knight() -> impl Iterator<Item = Direction> {
+        Self::KNIGHT_DIRECTIONS.iter().cloned()
+    }
+
     /// Move every piece on a board along the given direction. Do not wrap around the board.
     #[inline(always)]
     pub fn move_board(self, board: Bitboard) -> Bitboard {
