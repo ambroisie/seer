@@ -1,4 +1,4 @@
-use super::{Bitboard, Rank};
+use super::{Bitboard, Rank, Square};
 
 /// A direction on the board. Either along the rook, bishop, or knight directions
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -67,6 +67,12 @@ impl Direction {
         Self::KNIGHT_DIRECTIONS.iter().cloned()
     }
 
+    /// Move a [Square] along the given [Direction], unless it would wrap at the end of the board
+    pub fn move_square(self, square: Square) -> Option<Square> {
+        let res = self.move_board(square.into_bitboard());
+        res.into_iter().next()
+    }
+
     /// Move every piece on a board along the given direction. Do not wrap around the board.
     #[inline(always)]
     pub fn move_board(self, board: Bitboard) -> Bitboard {
@@ -105,7 +111,6 @@ impl Direction {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::board::Square;
 
     #[test]
     fn north() {
