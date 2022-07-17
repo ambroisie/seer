@@ -37,6 +37,12 @@ impl Bitboard {
         Bitboard(0b00000000_11111111_00000000_00000000_00000000_00000000_00000000_00000000),
         Bitboard(0b11111111_00000000_00000000_00000000_00000000_00000000_00000000_00000000),
     ];
+
+    /// Count the number of pieces in the [Bitboard].
+    #[inline(always)]
+    pub fn count(self) -> u32 {
+        self.0.count_ones()
+    }
 }
 
 impl Default for Bitboard {
@@ -169,6 +175,13 @@ impl std::ops::Sub<Square> for Bitboard {
 mod test {
     use super::*;
     use crate::board::square::*;
+
+    #[test]
+    fn count() {
+        assert_eq!(Bitboard::EMPTY.count(), 0);
+        assert_eq!(Bitboard::FILES[0].count(), 8);
+        assert_eq!(Bitboard::ALL.count(), 64);
+    }
 
     #[test]
     fn iter() {
