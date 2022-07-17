@@ -60,6 +60,12 @@ impl Square {
         std::mem::transmute(index as u8)
     }
 
+    /// Return the index of a given [Square].
+    #[inline(always)]
+    pub fn index(self) -> usize {
+        self as usize
+    }
+
     /// Return the index of the rank of this square (0 -> rank 1, ..., 7 -> rank 8).
     #[inline(always)]
     pub fn rank_index(self) -> usize {
@@ -186,6 +192,14 @@ mod test {
         assert_eq!(Square::new(File::A, Rank::Second), Square::A2);
         assert_eq!(Square::new(File::B, Rank::First), Square::B1);
         assert_eq!(Square::new(File::H, Rank::Eighth), Square::H8);
+    }
+
+    #[test]
+    fn index() {
+        assert_eq!(Square::A1.index(), 0);
+        assert_eq!(Square::A2.index(), 1);
+        assert_eq!(Square::B1.index(), 8);
+        assert_eq!(Square::H8.index(), 63);
     }
 
     #[test]
