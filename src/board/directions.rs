@@ -106,11 +106,39 @@ impl Direction {
             }
         }
     }
+
+    /// Slide a board along the given [Direction], i.e: return all successive applications of
+    /// [Direction::move_square] until no new squares can be reached.
+    /// It does not make sense to use this method with knight-only directions, and it will panic in
+    /// debug-mode if it happens.
+    #[inline(always)]
+    pub fn slide_square(self, square: Square) -> Bitboard {
+        self.slide_board(square.into_bitboard())
+    }
+
+    /// Slide a board along the given [Direction], i.e: return all successive applications of
+    /// [Direction::move_board] until no new squares can be reached.
+    /// It does not make sense to use this method with knight-only directions, and it will panic in
+    /// debug-mode if it happens.
+    #[inline(always)]
+    pub fn slide_board(self, mut board: Bitboard) -> Bitboard {
+        debug_assert!(!Self::KNIGHT_DIRECTIONS.contains(&self));
+
+        let mut res = Default::default();
+
+        while board != Bitboard::EMPTY {
+            board = self.move_board(board);
+            res = res | board;
+        }
+
+        res
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::board::{File, Rank};
 
     #[test]
     fn north() {
@@ -589,6 +617,42 @@ mod test {
         assert_eq!(
             Direction::NorthNorthEast.move_board(Square::G7.into_bitboard()),
             Bitboard::EMPTY,
+        );
+    }
+
+    #[test]
+    fn slide() {
+        assert_eq!(
+            Direction::North.slide_square(Square::A1),
+            File::A.into_bitboard() - Square::A1
+        );
+        assert_eq!(
+            Direction::West.slide_square(Square::H1),
+            Rank::First.into_bitboard() - Square::H1
+        );
+        assert_eq!(
+            Direction::South.slide_square(Square::A8),
+            File::A.into_bitboard() - Square::A8
+        );
+        assert_eq!(
+            Direction::East.slide_square(Square::A1),
+            Rank::First.into_bitboard() - Square::A1
+        );
+        assert_eq!(
+            Direction::NorthWest.slide_square(Square::H1),
+            Bitboard::ANTI_DIAGONAL - Square::H1
+        );
+        assert_eq!(
+            Direction::SouthWest.slide_square(Square::H8),
+            Bitboard::DIAGONAL - Square::H8
+        );
+        assert_eq!(
+            Direction::SouthEast.slide_square(Square::A8),
+            Bitboard::ANTI_DIAGONAL - Square::A8
+        );
+        assert_eq!(
+            Direction::NorthEast.slide_square(Square::A1),
+            Bitboard::DIAGONAL - Square::A1
         );
     }
 }
