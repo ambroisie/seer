@@ -1,6 +1,9 @@
 pub mod bitboard;
 pub use bitboard::*;
 
+pub mod castle_rights;
+pub use castle_rights::*;
+
 pub mod color;
 pub use color::*;
 
