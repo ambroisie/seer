@@ -31,6 +31,18 @@ impl CastleRights {
     pub fn index(self) -> usize {
         self as usize
     }
+
+    /// Can the player castle king-side.
+    #[inline(always)]
+    pub fn has_king_side(self) -> bool {
+        (self.index() & 1) != 0
+    }
+
+    /// Can the player castle king-side.
+    #[inline(always)]
+    pub fn has_queen_side(self) -> bool {
+        (self.index() & 2) != 0
+    }
 }
 
 #[cfg(test)]
@@ -51,5 +63,21 @@ mod test {
         assert_eq!(CastleRights::KingSide.index(), 1);
         assert_eq!(CastleRights::QueenSide.index(), 2);
         assert_eq!(CastleRights::BothSides.index(), 3);
+    }
+
+    #[test]
+    fn has_kingside() {
+        assert!(!CastleRights::NoSide.has_king_side());
+        assert!(!CastleRights::QueenSide.has_king_side());
+        assert!(CastleRights::KingSide.has_king_side());
+        assert!(CastleRights::BothSides.has_king_side());
+    }
+
+    #[test]
+    fn has_queenside() {
+        assert!(!CastleRights::NoSide.has_queen_side());
+        assert!(!CastleRights::KingSide.has_queen_side());
+        assert!(CastleRights::QueenSide.has_queen_side());
+        assert!(CastleRights::BothSides.has_queen_side());
     }
 }
