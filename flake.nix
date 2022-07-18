@@ -127,9 +127,8 @@
 
           nativeBuildInputs = with pkgs; [
             rust-analyzer
-            # Not included in the pre-commit hook unfortunately...
-            clippy
-            rustfmt
+            # Clippy, rustfmt, etc...
+            my-rust
           ];
 
           inherit (checks.pre-commit) shellHook;
