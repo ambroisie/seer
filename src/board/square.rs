@@ -1,4 +1,5 @@
 use super::{Bitboard, File, Rank};
+use crate::utils::static_assert;
 
 /// Represent a square on a chessboard. Defined in the same order as the
 /// [Bitboard](crate::board::Bitboard) squares.
@@ -178,6 +179,9 @@ impl std::ops::Sub<Bitboard> for Square {
         self.into_bitboard() - rhs
     }
 }
+
+// Ensure that niche-optimization is in effect.
+static_assert!(std::mem::size_of::<Option<Square>>() == std::mem::size_of::<Square>());
 
 #[cfg(test)]
 mod test {

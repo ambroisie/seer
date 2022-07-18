@@ -1,4 +1,5 @@
 use super::Bitboard;
+use crate::utils::static_assert;
 
 /// An enum representing a singular file on a chess board (i.e: the columns).
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -69,6 +70,9 @@ impl File {
         unsafe { *Bitboard::FILES.get_unchecked(self.index()) }
     }
 }
+
+// Ensure that niche-optimization is in effect.
+static_assert!(std::mem::size_of::<Option<File>>() == std::mem::size_of::<File>());
 
 #[cfg(test)]
 mod test {
