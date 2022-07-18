@@ -43,6 +43,25 @@ impl CastleRights {
     pub fn has_queen_side(self) -> bool {
         (self.index() & 2) != 0
     }
+
+    /// Remove king-side castling rights.
+    #[inline(always)]
+    pub fn without_king_side(self) -> Self {
+        self.remove(Self::KingSide)
+    }
+
+    /// Remove queen-side castling rights.
+    #[inline(always)]
+    pub fn without_queen_side(self) -> Self {
+        self.remove(Self::QueenSide)
+    }
+
+    /// Remove some [CastleRights], and return the resulting [CastleRights].
+    #[inline(always)]
+    pub fn remove(self, to_remove: CastleRights) -> Self {
+        // SAFETY: we know the value is in-bounds
+        unsafe { Self::from_index_unchecked(self.index() & !to_remove.index()) }
+    }
 }
 
 #[cfg(test)]
@@ -79,5 +98,45 @@ mod test {
         assert!(!CastleRights::KingSide.has_queen_side());
         assert!(CastleRights::QueenSide.has_queen_side());
         assert!(CastleRights::BothSides.has_queen_side());
+    }
+
+    #[test]
+    fn without_king_side() {
+        assert_eq!(
+            CastleRights::NoSide.without_king_side(),
+            CastleRights::NoSide
+        );
+        assert_eq!(
+            CastleRights::KingSide.without_king_side(),
+            CastleRights::NoSide
+        );
+        assert_eq!(
+            CastleRights::QueenSide.without_king_side(),
+            CastleRights::QueenSide
+        );
+        assert_eq!(
+            CastleRights::BothSides.without_king_side(),
+            CastleRights::QueenSide
+        );
+    }
+
+    #[test]
+    fn without_queen_side() {
+        assert_eq!(
+            CastleRights::NoSide.without_queen_side(),
+            CastleRights::NoSide
+        );
+        assert_eq!(
+            CastleRights::QueenSide.without_queen_side(),
+            CastleRights::NoSide
+        );
+        assert_eq!(
+            CastleRights::KingSide.without_queen_side(),
+            CastleRights::KingSide
+        );
+        assert_eq!(
+            CastleRights::BothSides.without_queen_side(),
+            CastleRights::KingSide
+        );
     }
 }
