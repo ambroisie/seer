@@ -1,6 +1,9 @@
 pub mod bitboard;
 pub use bitboard::*;
 
+pub mod color;
+pub use color::*;
+
 pub mod direction;
 pub use direction::*;
 
