@@ -1,4 +1,5 @@
 use super::Bitboard;
+use crate::utils::static_assert;
 
 /// An enum representing a singular rank on a chess board (i.e: the rows).
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -73,6 +74,9 @@ impl Rank {
         unsafe { *Bitboard::RANKS.get_unchecked(self.index()) }
     }
 }
+
+// Ensure that niche-optimization is in effect.
+static_assert!(std::mem::size_of::<Option<Rank>>() == std::mem::size_of::<Rank>());
 
 #[cfg(test)]
 mod test {

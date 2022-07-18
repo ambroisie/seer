@@ -1,4 +1,6 @@
 use super::Square;
+use crate::utils::static_assert;
+
 mod iterator;
 use iterator::*;
 
@@ -62,6 +64,9 @@ impl Bitboard {
         self == Self::EMPTY
     }
 }
+
+// Ensure zero-cost (at least size-wise) wrapping.
+static_assert!(std::mem::size_of::<Bitboard>() == std::mem::size_of::<u64>());
 
 impl Default for Bitboard {
     fn default() -> Self {
