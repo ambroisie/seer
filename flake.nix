@@ -144,6 +144,8 @@
         seer = naersk-lib.buildPackage {
           src = self;
 
+          doCheck = true;
+
           passthru = {
             inherit my-rust;
           };
