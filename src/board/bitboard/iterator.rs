@@ -14,4 +14,14 @@ impl Iterator for BitboardIterator {
             Some(crate::board::Square::from_index(lsb))
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let size = self.0.count_ones() as usize;
+
+        (size, Some(size))
+    }
 }
+
+impl ExactSizeIterator for BitboardIterator {}
+
+impl std::iter::FusedIterator for BitboardIterator {}
