@@ -1,3 +1,5 @@
+use super::{Bitboard, Color, File, Square};
+
 /// Current castle rights for a player.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum CastleRights {
@@ -65,6 +67,22 @@ impl CastleRights {
     pub fn remove(self, to_remove: CastleRights) -> Self {
         // SAFETY: we know the value is in-bounds
         unsafe { Self::from_index_unchecked(self.index() & !to_remove.index()) }
+    }
+
+    /// Which rooks have not been moved for a given [CastleRights] and [Color].
+    #[inline(always)]
+    pub fn unmoved_rooks(self, color: Color) -> Bitboard {
+        let rank = color.first_rank();
+
+        let king_side_square = Square::new(File::H, rank);
+        let queen_side_square = Square::new(File::A, rank);
+
+        match self {
+            Self::NoSide => Bitboard::EMPTY,
+            Self::KingSide => king_side_square.into_bitboard(),
+            Self::QueenSide => queen_side_square.into_bitboard(),
+            Self::BothSides => king_side_square | queen_side_square,
+        }
     }
 }
 
@@ -141,6 +159,42 @@ mod test {
         assert_eq!(
             CastleRights::BothSides.without_queen_side(),
             CastleRights::KingSide
+        );
+    }
+
+    #[test]
+    fn unmoved_rooks() {
+        assert_eq!(
+            CastleRights::NoSide.unmoved_rooks(Color::White),
+            Bitboard::EMPTY
+        );
+        assert_eq!(
+            CastleRights::NoSide.unmoved_rooks(Color::Black),
+            Bitboard::EMPTY
+        );
+        assert_eq!(
+            CastleRights::KingSide.unmoved_rooks(Color::White),
+            Square::H1.into_bitboard()
+        );
+        assert_eq!(
+            CastleRights::KingSide.unmoved_rooks(Color::Black),
+            Square::H8.into_bitboard()
+        );
+        assert_eq!(
+            CastleRights::QueenSide.unmoved_rooks(Color::White),
+            Square::A1.into_bitboard()
+        );
+        assert_eq!(
+            CastleRights::QueenSide.unmoved_rooks(Color::Black),
+            Square::A8.into_bitboard()
+        );
+        assert_eq!(
+            CastleRights::BothSides.unmoved_rooks(Color::White),
+            Square::A1 | Square::H1
+        );
+        assert_eq!(
+            CastleRights::BothSides.unmoved_rooks(Color::Black),
+            Square::A8 | Square::H8
         );
     }
 }
