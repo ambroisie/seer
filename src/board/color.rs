@@ -1,4 +1,4 @@
-use super::Rank;
+use super::{Direction, Rank};
 
 /// An enum representing the color of a player.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -64,6 +64,21 @@ impl Color {
             Self::White => Rank::Seventh,
             Self::Black => Rank::Second,
         }
+    }
+
+    /// Which way do pawns advance for this color.
+    #[inline(always)]
+    pub fn forward_direction(self) -> Direction {
+        match self {
+            Self::White => Direction::North,
+            Self::Black => Direction::South,
+        }
+    }
+
+    /// Which way do the opponent's pawns advance for this color.
+    #[inline(always)]
+    pub fn backward_direction(self) -> Direction {
+        (!self).forward_direction()
     }
 }
 
