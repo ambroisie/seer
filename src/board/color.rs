@@ -8,7 +8,7 @@ pub enum Color {
 }
 
 impl Color {
-    /// Convert from a file index into a [Color] type.
+    /// Convert from a piece index into a [Color] type.
     #[inline(always)]
     pub fn from_index(index: usize) -> Self {
         assert!(index < 2);
@@ -16,7 +16,7 @@ impl Color {
         unsafe { Self::from_index_unchecked(index) }
     }
 
-    /// Convert from a file index into a [Color] type, no bounds checking.
+    /// Convert from a piece index into a [Color] type, no bounds checking.
     #[inline(always)]
     pub unsafe fn from_index_unchecked(index: usize) -> Self {
         std::mem::transmute(index as u8)
