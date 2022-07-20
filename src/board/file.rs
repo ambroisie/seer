@@ -15,19 +15,19 @@ pub enum File {
 }
 
 impl File {
-    const ALL: [File; 8] = [
-        File::A,
-        File::B,
-        File::C,
-        File::D,
-        File::E,
-        File::F,
-        File::G,
-        File::H,
+    const ALL: [Self; 8] = [
+        Self::A,
+        Self::B,
+        Self::C,
+        Self::D,
+        Self::E,
+        Self::F,
+        Self::G,
+        Self::H,
     ];
 
     /// Iterate over all files in order.
-    pub fn iter() -> impl Iterator<Item = File> {
+    pub fn iter() -> impl Iterator<Item = Self> {
         Self::ALL.iter().cloned()
     }
 

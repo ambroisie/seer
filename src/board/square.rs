@@ -43,7 +43,7 @@ impl Square {
     }
 
     /// Iterate over all squares in order.
-    pub fn iter() -> impl Iterator<Item = Square> {
+    pub fn iter() -> impl Iterator<Item = Self> {
         Self::ALL.iter().cloned()
     }
 

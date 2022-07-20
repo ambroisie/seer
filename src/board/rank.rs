@@ -15,19 +15,19 @@ pub enum Rank {
 }
 
 impl Rank {
-    const ALL: [Rank; 8] = [
-        Rank::First,
-        Rank::Second,
-        Rank::Third,
-        Rank::Fourth,
-        Rank::Fifth,
-        Rank::Sixth,
-        Rank::Seventh,
-        Rank::Eighth,
+    const ALL: [Self; 8] = [
+        Self::First,
+        Self::Second,
+        Self::Third,
+        Self::Fourth,
+        Self::Fifth,
+        Self::Sixth,
+        Self::Seventh,
+        Self::Eighth,
     ];
 
     /// Iterate over all ranks in order.
-    pub fn iter() -> impl Iterator<Item = Rank> {
+    pub fn iter() -> impl Iterator<Item = Self> {
         Self::ALL.iter().cloned()
     }
 
