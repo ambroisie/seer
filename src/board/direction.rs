@@ -121,7 +121,18 @@ impl Direction {
     /// It does not make sense to use this method with knight-only directions, and it will panic in
     /// debug-mode if it happens.
     #[inline(always)]
-    pub fn slide_board(self, mut board: Bitboard) -> Bitboard {
+    pub fn slide_board(self, board: Bitboard) -> Bitboard {
+        self.slide_board_with_blockers(board, Bitboard::EMPTY)
+    }
+
+    /// Slide a board along the given [Direction], i.e: return all successive applications of
+    /// [Direction::move_board] until no new squares can be reached.
+    /// Take into account the `blockers` [Bitboard]: a combination of all pieces on the board which
+    /// cannot be slid over. The slide is over once a square that is part of `blockers` is reached.
+    /// It does not make sense to use this method with knight-only directions, and it will panic in
+    /// debug-mode if it happens.
+    #[inline(always)]
+    pub fn slide_board_with_blockers(self, mut board: Bitboard, blockers: Bitboard) -> Bitboard {
         debug_assert!(!Self::KNIGHT_DIRECTIONS.contains(&self));
 
         let mut res = Default::default();
@@ -129,6 +140,9 @@ impl Direction {
         while !board.is_empty() {
             board = self.move_board(board);
             res = res | board;
+            if !(board & blockers).is_empty() {
+                break;
+            }
         }
 
         res
@@ -653,6 +667,31 @@ mod test {
         assert_eq!(
             Direction::NorthEast.slide_square(Square::A1),
             Bitboard::DIAGONAL - Square::A1
+        );
+    }
+
+    #[test]
+    fn blocked_slides() {
+        assert_eq!(
+            Direction::North
+                .slide_board_with_blockers(Square::A1.into_bitboard(), Square::A2.into_bitboard()),
+            Square::A2.into_bitboard()
+        );
+        assert_eq!(
+            Direction::North
+                .slide_board_with_blockers(Square::A1.into_bitboard(), Square::A3.into_bitboard()),
+            Square::A2 | Square::A3
+        );
+        assert_eq!(
+            Direction::North
+                .slide_board_with_blockers(Square::A1.into_bitboard(), Square::A4.into_bitboard()),
+            Square::A2 | Square::A3 | Square::A4
+        );
+        // Ensure that the starting square being in `blockers` is not an issue
+        assert_eq!(
+            Direction::North
+                .slide_board_with_blockers(Square::A1.into_bitboard(), Square::A1.into_bitboard()),
+            File::A.into_bitboard() - Square::A1
         );
     }
 }
