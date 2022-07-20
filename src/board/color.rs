@@ -8,10 +8,13 @@ pub enum Color {
 }
 
 impl Color {
+    /// The number of [Color] variants.
+    pub const NUM_VARIANTS: usize = 2;
+
     /// Convert from a piece index into a [Color] type.
     #[inline(always)]
     pub fn from_index(index: usize) -> Self {
-        assert!(index < 2);
+        assert!(index < Self::NUM_VARIANTS);
         // SAFETY: we know the value is in-bounds
         unsafe { Self::from_index_unchecked(index) }
     }

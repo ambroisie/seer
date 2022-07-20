@@ -23,8 +23,11 @@ impl std::fmt::Display for Square {
 }
 
 impl Square {
+    /// The number of [Square] variants.
+    pub const NUM_VARIANTS: usize = 64;
+
     #[rustfmt::skip]
-    const ALL: [Self; 64] = [
+    const ALL: [Self; Self::NUM_VARIANTS] = [
         Self::A1, Self::A2, Self::A3, Self::A4, Self::A5, Self::A6, Self::A7, Self::A8,
         Self::B1, Self::B2, Self::B3, Self::B4, Self::B5, Self::B6, Self::B7, Self::B8,
         Self::C1, Self::C2, Self::C3, Self::C4, Self::C5, Self::C6, Self::C7, Self::C8,

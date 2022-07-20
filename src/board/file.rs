@@ -15,7 +15,10 @@ pub enum File {
 }
 
 impl File {
-    const ALL: [Self; 8] = [
+    /// The number of [File] variants.
+    pub const NUM_VARIANTS: usize = 8;
+
+    const ALL: [Self; Self::NUM_VARIANTS] = [
         Self::A,
         Self::B,
         Self::C,

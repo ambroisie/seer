@@ -15,7 +15,10 @@ pub enum Rank {
 }
 
 impl Rank {
-    const ALL: [Self; 8] = [
+    /// The number of [Rank] variants.
+    pub const NUM_VARIANTS: usize = 8;
+
+    const ALL: [Self; Self::NUM_VARIANTS] = [
         Self::First,
         Self::Second,
         Self::Third,
