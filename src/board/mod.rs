@@ -13,6 +13,9 @@ pub use direction::*;
 pub mod file;
 pub use file::*;
 
+pub mod piece;
+pub use piece::*;
+
 pub mod rank;
 pub use rank::*;
 
