@@ -15,7 +15,10 @@ pub enum File {
 }
 
 impl File {
-    const ALL: [Self; 8] = [
+    /// The number of [File] variants.
+    pub const NUM_VARIANTS: usize = 8;
+
+    const ALL: [Self; Self::NUM_VARIANTS] = [
         Self::A,
         Self::B,
         Self::C,
@@ -34,7 +37,7 @@ impl File {
     /// Convert from a file index into a [File] type.
     #[inline(always)]
     pub fn from_index(index: usize) -> Self {
-        assert!(index < 8);
+        assert!(index < Self::NUM_VARIANTS);
         // SAFETY: we know the value is in-bounds
         unsafe { Self::from_index_unchecked(index) }
     }

@@ -14,10 +14,13 @@ pub enum CastleRights {
 }
 
 impl CastleRights {
+    /// The number of [CastleRights] variants.
+    pub const NUM_VARIANTS: usize = 4;
+
     /// Convert from a castle rights index into a [CastleRights] type.
     #[inline(always)]
     pub fn from_index(index: usize) -> Self {
-        assert!(index < 4);
+        assert!(index < Self::NUM_VARIANTS);
         // SAFETY: we know the value is in-bounds
         unsafe { Self::from_index_unchecked(index) }
     }
