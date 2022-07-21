@@ -85,7 +85,7 @@ impl Default for Bitboard {
     }
 }
 
-/// Iterate over the [Square](crate::board::Square) values included in the board.
+/// Iterate over the [Square] values included in the board.
 impl IntoIterator for Bitboard {
     type IntoIter = BitboardIterator;
     type Item = Square;
@@ -135,7 +135,7 @@ impl std::ops::BitOr<Bitboard> for Bitboard {
     }
 }
 
-/// Treat the [Square](crate::board::Square) as a singleton bitboard, and apply the operator.
+/// Treat the [Square] as a singleton bitboard, and apply the operator.
 impl std::ops::BitOr<Square> for Bitboard {
     type Output = Bitboard;
 
@@ -155,7 +155,7 @@ impl std::ops::BitAnd<Bitboard> for Bitboard {
     }
 }
 
-/// Treat the [Square](crate::board::Square) as a singleton bitboard, and apply the operator.
+/// Treat the [Square] as a singleton bitboard, and apply the operator.
 impl std::ops::BitAnd<Square> for Bitboard {
     type Output = Bitboard;
 
@@ -175,7 +175,7 @@ impl std::ops::BitXor<Bitboard> for Bitboard {
     }
 }
 
-/// Treat the [Square](crate::board::Square) as a singleton bitboard, and apply the operator.
+/// Treat the [Square] as a singleton bitboard, and apply the operator.
 impl std::ops::BitXor<Square> for Bitboard {
     type Output = Bitboard;
 
@@ -195,7 +195,7 @@ impl std::ops::Sub<Bitboard> for Bitboard {
     }
 }
 
-/// Treat the [Square](crate::board::Square) as a singleton bitboard, and apply the operator.
+/// Treat the [Square] as a singleton bitboard, and apply the operator.
 impl std::ops::Sub<Square> for Bitboard {
     type Output = Bitboard;
 
