@@ -3,6 +3,8 @@ use crate::utils::static_assert;
 
 mod iterator;
 use iterator::*;
+mod superset;
+use superset::*;
 
 /// Use a 64-bit number to represent a chessboard. Each bit is mapped from to a specific square, so
 /// that index 0 -> A1, 1 -> A2, ..., 63 -> H8.
@@ -62,6 +64,15 @@ impl Bitboard {
     #[inline(always)]
     pub fn is_empty(self) -> bool {
         self == Self::EMPTY
+    }
+
+    /// Iterate over the power-set of a given [Bitboard], yielding each possible sub-set of
+    /// [Square] that belong to the [Bitboard]. In other words, generate all set of [Square] that
+    /// contain all, some, or none of the [Square] that are in the given [Bitboard].
+    /// If given an empty [Bitboard], yields the empty [Bitboard] back.
+    #[inline(always)]
+    pub fn iter_power_set(self) -> impl Iterator<Item = Self> {
+        BitboardPowerSetIterator::new(self)
     }
 }
 
@@ -196,8 +207,10 @@ impl std::ops::Sub<Square> for Bitboard {
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashSet;
+
     use super::*;
-    use crate::board::square::*;
+    use crate::board::{square::*, File, Rank};
 
     #[test]
     fn count() {
@@ -279,5 +292,76 @@ mod test {
     fn sub() {
         assert_eq!(Bitboard::FILES[0] - Bitboard::RANKS[0], Bitboard(0xff - 1));
         assert_eq!(Bitboard::FILES[0] - Square::A1, Bitboard(0xff - 1));
+    }
+
+    #[test]
+    fn iter_power_set_empty() {
+        assert_eq!(
+            Bitboard::EMPTY.iter_power_set().collect::<Vec<_>>(),
+            vec![Bitboard::EMPTY]
+        )
+    }
+
+    #[test]
+    fn iter_power_set_one_square() {
+        for square in Square::iter() {
+            assert_eq!(
+                square
+                    .into_bitboard()
+                    .iter_power_set()
+                    .collect::<HashSet<_>>(),
+                [Bitboard::EMPTY, square.into_bitboard()]
+                    .into_iter()
+                    .collect::<HashSet<_>>()
+            )
+        }
+    }
+
+    #[test]
+    fn iter_power_set_two_squares() {
+        assert_eq!(
+            (Square::A1 | Square::H8)
+                .iter_power_set()
+                .collect::<HashSet<_>>(),
+            [
+                Bitboard::EMPTY,
+                Square::A1.into_bitboard(),
+                Square::H8.into_bitboard(),
+                Square::A1 | Square::H8
+            ]
+            .into_iter()
+            .collect::<HashSet<_>>()
+        )
+    }
+
+    #[test]
+    fn iter_power_set_six_squares_exhaustive() {
+        let mask = (0..6)
+            .map(Square::from_index)
+            .fold(Bitboard::EMPTY, |lhs, rhs| lhs | rhs);
+        assert_eq!(
+            mask.iter_power_set().collect::<HashSet<_>>(),
+            (0..(1 << 6)).map(Bitboard).collect::<HashSet<_>>()
+        )
+    }
+
+    #[test]
+    fn iter_power_set_eight_squares_length() {
+        assert_eq!(
+            File::A
+                .into_bitboard()
+                .iter_power_set()
+                .collect::<HashSet<_>>()
+                .len(),
+            1 << 8
+        );
+        assert_eq!(
+            Rank::First
+                .into_bitboard()
+                .iter_power_set()
+                .collect::<HashSet<_>>()
+                .len(),
+            1 << 8
+        );
     }
 }
