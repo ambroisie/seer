@@ -2,7 +2,7 @@ use super::{Bitboard, File, Rank};
 use crate::utils::static_assert;
 
 /// Represent a square on a chessboard. Defined in the same order as the
-/// [Bitboard](crate::board::Bitboard) squares.
+/// [Bitboard] squares.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[rustfmt::skip]
 pub enum Square {
