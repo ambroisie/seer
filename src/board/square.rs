@@ -109,6 +109,7 @@ impl std::ops::Shl<usize> for Square {
 
     #[inline(always)]
     fn shl(self, rhs: usize) -> Self::Output {
+        #[allow(clippy::suspicious_arithmetic_impl)]
         Square::from_index(self as usize + rhs)
     }
 }
@@ -119,6 +120,7 @@ impl std::ops::Shr<usize> for Square {
 
     #[inline(always)]
     fn shr(self, rhs: usize) -> Self::Output {
+        #[allow(clippy::suspicious_arithmetic_impl)]
         Square::from_index(self as usize - rhs)
     }
 }
