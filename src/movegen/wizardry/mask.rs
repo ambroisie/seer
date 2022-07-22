@@ -2,7 +2,6 @@ use crate::board::{Bitboard, File, Rank, Square};
 use crate::movegen::bishop::bishop_moves;
 use crate::movegen::rook::rook_moves;
 
-#[allow(unused)] // FIXME: remove once used
 pub fn generate_bishop_mask(square: Square) -> Bitboard {
     let rays = bishop_moves(square, Bitboard::EMPTY);
 
@@ -14,7 +13,6 @@ pub fn generate_bishop_mask(square: Square) -> Bitboard {
     rays - mask
 }
 
-#[allow(unused)] // FIXME: remove once used
 pub fn generate_rook_mask(square: Square) -> Bitboard {
     let rays = rook_moves(square, Bitboard::EMPTY);
 
