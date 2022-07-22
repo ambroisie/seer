@@ -4,13 +4,13 @@ use crate::board::Bitboard;
 #[allow(unused)] // FIXME: remove once used
 pub struct Magic {
     /// Magic number.
-    magic: u64,
+    pub(crate) magic: u64,
     /// Base offset into the magic square table.
-    offset: usize,
+    pub(crate) offset: usize,
     /// Mask to apply to the blocker board before applying the magic.
-    mask: Bitboard,
+    pub(crate) mask: Bitboard,
     /// Length of the resulting mask after applying the magic.
-    shift: u8,
+    pub(crate) shift: u8,
 }
 
 impl Magic {
