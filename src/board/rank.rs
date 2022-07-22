@@ -43,6 +43,10 @@ impl Rank {
     }
 
     /// Convert from a rank index into a [Rank] type, no bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Should only be called with values that can be output by [Rank::index()].
     #[inline(always)]
     pub unsafe fn from_index_unchecked(index: usize) -> Self {
         std::mem::transmute(index as u8)

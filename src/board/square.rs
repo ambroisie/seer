@@ -59,6 +59,10 @@ impl Square {
     }
 
     /// Convert from a square index into a [Square] type, no bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Should only be called with values that can be output by [Square::index()].
     #[inline(always)]
     pub unsafe fn from_index_unchecked(index: usize) -> Self {
         std::mem::transmute(index as u8)

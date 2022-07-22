@@ -26,6 +26,10 @@ impl CastleRights {
     }
 
     /// Convert from a castle rights index into a [CastleRights] type, no bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Should only be called with values that can be output by [CastleRights::index()].
     #[inline(always)]
     pub unsafe fn from_index_unchecked(index: usize) -> Self {
         std::mem::transmute(index as u8)
