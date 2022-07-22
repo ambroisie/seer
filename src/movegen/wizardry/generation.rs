@@ -22,42 +22,42 @@ fn generate_magics(
     mask_fn: impl Fn(Square) -> Bitboard,
     moves_fn: impl Fn(Square, Bitboard) -> Bitboard,
 ) -> MagicGenerationType {
-    let mut offset = 0;
-
     let mut magics = Vec::new();
     let mut boards = Vec::new();
 
     for square in Square::iter() {
         let mask = mask_fn(square);
         let mut candidate: Magic;
-        let potential_occupancy: Vec<_> = mask.iter_power_set().collect();
-        let moves_len = potential_occupancy.len();
+
+        let occupancy_to_moves: Vec<_> = mask
+            .iter_power_set()
+            .map(|occupancy| (occupancy, moves_fn(square, occupancy)))
+            .collect();
 
         'candidate_search: loop {
             candidate = Magic {
                 magic: magic_candidate(rng),
-                offset,
+                offset: 0,
                 mask,
                 shift: (64 - mask.count()) as u8,
             };
-            let mut candidate_moves = Vec::new();
-            candidate_moves.resize(moves_len, Bitboard::EMPTY);
+            let mut candidate_moves = vec![Bitboard::EMPTY; occupancy_to_moves.len()];
 
-            for occupancy in potential_occupancy.iter().cloned() {
+            for (occupancy, moves) in occupancy_to_moves.iter().cloned() {
                 let index = candidate.get_index(occupancy);
-                let moves = moves_fn(square, occupancy);
+                // Non-constructive collision, try with another candidate
                 if candidate_moves[index] != Bitboard::EMPTY && candidate_moves[index] != moves {
                     continue 'candidate_search;
                 }
                 candidate_moves[index] = moves;
             }
 
+            // We have filled all candidate boards, record the correct offset and add the moves
+            candidate.offset = boards.len();
             boards.append(&mut candidate_moves);
+            magics.push(candidate);
             break;
         }
-
-        magics.push(candidate);
-        offset += moves_len;
     }
 
     (magics, boards)
