@@ -8,3 +8,6 @@ mod king;
 mod knight;
 mod pawn;
 mod rook;
+
+// Magic bitboard generation
+mod wizardry;
