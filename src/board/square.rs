@@ -18,7 +18,7 @@ pub enum Square {
 
 impl std::fmt::Display for Square {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self))
+        write!(f, "{:?}", self)
     }
 }
 
