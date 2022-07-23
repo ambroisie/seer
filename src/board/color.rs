@@ -11,6 +11,13 @@ impl Color {
     /// The number of [Color] variants.
     pub const NUM_VARIANTS: usize = 2;
 
+    const ALL: [Self; Self::NUM_VARIANTS] = [Self::White, Self::Black];
+
+    /// Iterate over all colors in order.
+    pub fn iter() -> impl Iterator<Item = Self> {
+        Self::ALL.iter().cloned()
+    }
+
     /// Convert from a color index into a [Color] type.
     #[inline(always)]
     pub fn from_index(index: usize) -> Self {
