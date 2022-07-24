@@ -1,6 +1,5 @@
 use crate::board::{Bitboard, Direction, Square};
 
-#[allow(unused)]
 pub fn rook_moves(square: Square, blockers: Bitboard) -> Bitboard {
     Direction::iter_rook()
         .map(|dir| dir.slide_board_with_blockers(square.into_bitboard(), blockers))

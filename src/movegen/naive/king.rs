@@ -1,7 +1,6 @@
 use crate::board::{Bitboard, CastleRights, Color, Direction, File, Square};
 
 // No castling moves included
-#[allow(unused)]
 pub fn king_moves(square: Square) -> Bitboard {
     let board = square.into_bitboard();
 
@@ -10,7 +9,6 @@ pub fn king_moves(square: Square) -> Bitboard {
         .fold(Bitboard::EMPTY, |lhs, rhs| lhs | rhs)
 }
 
-#[allow(unused)]
 pub fn king_castling_moves(color: Color, castle_rights: CastleRights) -> Bitboard {
     let rank = color.first_rank();
 

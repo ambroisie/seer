@@ -1,6 +1,5 @@
 use crate::board::{Bitboard, Color, Direction, Rank, Square};
 
-#[allow(unused)]
 pub fn pawn_moves(color: Color, square: Square, blockers: Bitboard) -> Bitboard {
     if (square.rank() == Rank::First) || (square.rank() == Rank::Eighth) {
         return Bitboard::EMPTY;
@@ -22,7 +21,6 @@ pub fn pawn_moves(color: Color, square: Square, blockers: Bitboard) -> Bitboard 
     }
 }
 
-#[allow(unused)]
 pub fn pawn_captures(color: Color, square: Square) -> Bitboard {
     if (square.rank() == Rank::First) || (square.rank() == Rank::Eighth) {
         return Bitboard::EMPTY;
@@ -38,7 +36,6 @@ pub fn pawn_captures(color: Color, square: Square) -> Bitboard {
     attack_west | attack_east
 }
 
-#[allow(unused)]
 pub fn en_passant_origins(square: Square) -> Bitboard {
     let board = square.into_bitboard();
 
