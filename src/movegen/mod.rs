@@ -3,11 +3,11 @@ pub mod magic;
 pub use magic::*;
 
 // Move generation implementation details
-mod bishop;
-mod king;
-mod knight;
-mod pawn;
-mod rook;
+pub(crate) mod bishop;
+pub(crate) mod king;
+pub(crate) mod knight;
+pub(crate) mod pawn;
+pub(crate) mod rook;
 
 // Magic bitboard generation
-mod wizardry;
+pub(crate) mod wizardry;

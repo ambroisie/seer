@@ -1,2 +1,2 @@
-mod generation;
+pub(crate) mod generation;
 mod mask;
