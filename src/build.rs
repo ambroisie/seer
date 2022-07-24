@@ -134,5 +134,10 @@ fn main() -> Result<()> {
     // Include the generated files now that the build script has run.
     println!("cargo:rustc-cfg=generated_boards");
 
+    // Run the build script only if something in move generation might have changed.
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=movegen/naive/");
+    println!("cargo:rerun-if-changed=movegen/wizardry/");
+
     Ok(())
 }
