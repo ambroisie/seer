@@ -19,3 +19,8 @@ impl Magic {
         base_index + self.offset
     }
 }
+
+#[cfg(generated_boards)]
+mod moves;
+#[cfg(generated_boards)]
+pub use moves::*;

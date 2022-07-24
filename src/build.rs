@@ -131,5 +131,8 @@ fn main() -> Result<()> {
         print_boards(&mut out, "QUEEN_SIDE_CASTLE_BLOCKERS", &queen_blockers)?;
     }
 
+    // Include the generated files now that the build script has run.
+    println!("cargo:rustc-cfg=generated_boards");
+
     Ok(())
 }
