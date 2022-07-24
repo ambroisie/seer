@@ -7,9 +7,11 @@ pub mod utils;
 use crate::{
     board::{Bitboard, Color, File, Square},
     movegen::{
-        king::king_moves,
-        knight::knight_moves,
-        pawn::{pawn_captures, pawn_moves},
+        naive::{
+            king::king_moves,
+            knight::knight_moves,
+            pawn::{pawn_captures, pawn_moves},
+        },
         wizardry::generation::{generate_bishop_magics, generate_rook_magics},
         Magic,
     },

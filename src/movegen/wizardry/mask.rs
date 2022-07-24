@@ -1,6 +1,5 @@
 use crate::board::{Bitboard, File, Rank, Square};
-use crate::movegen::bishop::bishop_moves;
-use crate::movegen::rook::rook_moves;
+use crate::movegen::naive::{bishop::bishop_moves, rook::rook_moves};
 
 pub fn generate_bishop_mask(square: Square) -> Bitboard {
     let rays = bishop_moves(square, Bitboard::EMPTY);

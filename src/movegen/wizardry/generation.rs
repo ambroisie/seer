@@ -1,6 +1,5 @@
 use crate::board::{Bitboard, Square};
-use crate::movegen::bishop::bishop_moves;
-use crate::movegen::rook::rook_moves;
+use crate::movegen::naive::{bishop::bishop_moves, rook::rook_moves};
 use crate::movegen::Magic;
 
 use super::mask::{generate_bishop_mask, generate_rook_mask};
