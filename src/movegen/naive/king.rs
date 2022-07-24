@@ -1,4 +1,4 @@
-use crate::board::{Bitboard, CastleRights, Color, Direction, File, Square};
+use crate::board::{Bitboard, Direction, Square};
 
 /// Compute a king's movement. No castling moves included
 #[allow(unused)]
@@ -8,22 +8,6 @@ pub fn king_moves(square: Square) -> Bitboard {
     Direction::iter_royalty()
         .map(|dir| dir.move_board(board))
         .fold(Bitboard::EMPTY, |lhs, rhs| lhs | rhs)
-}
-
-/// Compute a king's castling moves, given its [Color] and [CastleRights].
-#[allow(unused)]
-pub fn king_castling_moves(color: Color, castle_rights: CastleRights) -> Bitboard {
-    let rank = color.first_rank();
-
-    let king_side_square = Square::new(File::G, rank);
-    let queen_side_square = Square::new(File::C, rank);
-
-    match castle_rights {
-        CastleRights::NoSide => Bitboard::EMPTY,
-        CastleRights::KingSide => king_side_square.into_bitboard(),
-        CastleRights::QueenSide => queen_side_square.into_bitboard(),
-        CastleRights::BothSides => king_side_square | queen_side_square,
-    }
 }
 
 #[cfg(test)]
@@ -184,42 +168,6 @@ mod test {
                 | Square::F4
                 | Square::F5
                 | Square::F6
-        );
-    }
-
-    #[test]
-    fn castling_moves() {
-        assert_eq!(
-            king_castling_moves(Color::White, CastleRights::NoSide),
-            Bitboard::EMPTY
-        );
-        assert_eq!(
-            king_castling_moves(Color::Black, CastleRights::NoSide),
-            Bitboard::EMPTY
-        );
-        assert_eq!(
-            king_castling_moves(Color::White, CastleRights::KingSide),
-            Square::G1.into_bitboard()
-        );
-        assert_eq!(
-            king_castling_moves(Color::Black, CastleRights::KingSide),
-            Square::G8.into_bitboard()
-        );
-        assert_eq!(
-            king_castling_moves(Color::White, CastleRights::QueenSide),
-            Square::C1.into_bitboard()
-        );
-        assert_eq!(
-            king_castling_moves(Color::Black, CastleRights::QueenSide),
-            Square::C8.into_bitboard()
-        );
-        assert_eq!(
-            king_castling_moves(Color::White, CastleRights::BothSides),
-            Square::C1 | Square::G1
-        );
-        assert_eq!(
-            king_castling_moves(Color::Black, CastleRights::BothSides),
-            Square::C8 | Square::G8
         );
     }
 }
