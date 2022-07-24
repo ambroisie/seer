@@ -5,19 +5,16 @@ use super::mask::{generate_bishop_mask, generate_rook_mask};
 use super::Magic;
 
 /// A trait to represent RNG for u64 values.
-#[allow(unused)] // FIXME: remove when used
 pub(crate) trait RandGen {
     fn gen(&mut self) -> u64;
 }
 
 type MagicGenerationType = (Vec<Magic>, Vec<Bitboard>);
 
-#[allow(unused)] // FIXME: remove when used
 pub fn generate_bishop_magics(rng: &mut dyn RandGen) -> MagicGenerationType {
     generate_magics(rng, generate_bishop_mask, bishop_moves)
 }
 
-#[allow(unused)] // FIXME: remove when used
 pub fn generate_rook_magics(rng: &mut dyn RandGen) -> MagicGenerationType {
     generate_magics(rng, generate_rook_mask, rook_moves)
 }

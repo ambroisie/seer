@@ -28,13 +28,11 @@ impl Magic {
 
 /// A type encapsulating a database of [Magic] bitboard moves.
 #[derive(Clone, Debug)]
-#[allow(unused)] // FIXME: remove when used
 pub(crate) struct MagicMoves {
     magics: Vec<Magic>,
     moves: Vec<Bitboard>,
 }
 
-#[allow(unused)] // FIXME: remove when used
 impl MagicMoves {
     /// Initialize a new [MagicMoves] given a matching list of [Magic] and its corresponding moves
     /// as a [Bitboard].

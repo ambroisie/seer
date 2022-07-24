@@ -1,7 +1,6 @@
 use crate::board::{Bitboard, Direction, Square};
 
 /// Compute a bishop's movement given a set of blockers that cannot be moved past.
-#[allow(unused)]
 pub fn bishop_moves(square: Square, blockers: Bitboard) -> Bitboard {
     Direction::iter_bishop()
         .map(|dir| dir.slide_board_with_blockers(square.into_bitboard(), blockers))

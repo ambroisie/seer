@@ -1,7 +1,6 @@
 use crate::board::{Bitboard, Direction, Square};
 
 /// Compute a knight's movement.
-#[allow(unused)]
 pub fn knight_moves(square: Square) -> Bitboard {
     let board = square.into_bitboard();
 

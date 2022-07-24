@@ -1,7 +1,6 @@
 use crate::board::{Bitboard, Color, Direction, Rank, Square};
 
 /// Compute a pawn's movement given its color, and a set of blockers that cannot be moved past.
-#[allow(unused)]
 pub fn pawn_moves(color: Color, square: Square, blockers: Bitboard) -> Bitboard {
     if (square.rank() == Rank::First) || (square.rank() == Rank::Eighth) {
         return Bitboard::EMPTY;
@@ -24,7 +23,6 @@ pub fn pawn_moves(color: Color, square: Square, blockers: Bitboard) -> Bitboard 
 }
 
 /// Computes the set of squares a pawn can capture, given its color.
-#[allow(unused)]
 pub fn pawn_captures(color: Color, square: Square) -> Bitboard {
     if (square.rank() == Rank::First) || (square.rank() == Rank::Eighth) {
         return Bitboard::EMPTY;
