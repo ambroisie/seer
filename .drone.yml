@@ -4,9 +4,9 @@ type: exec
 name: abacus checks
 
 steps:
-- name: flake check
+- name: pre commit check
   commands:
-  - nix flake check
+  - nix develop . --command pre-commit run --all
 
 - name: package check
   commands:
