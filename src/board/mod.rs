@@ -13,6 +13,9 @@ pub use direction::*;
 pub mod file;
 pub use file::*;
 
+pub mod r#move;
+pub use r#move::*;
+
 pub mod piece;
 pub use piece::*;
 
