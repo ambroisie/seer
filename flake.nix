@@ -80,44 +80,42 @@
         rustc = my-rust;
       };
       inherit (pkgs) lib;
-    in
-    rec {
-      checks = {
-        pre-commit =
-          let
-            # See https://github.com/cachix/pre-commit-hooks.nix/issues/126
-            rust-env = pkgs.buildEnv {
-              name = "rust-env";
-              buildInputs = [ pkgs.makeWrapper ];
-              paths = [ my-rust ];
-              pathsToLink = [ "/" "/bin" ];
-              postBuild = ''
-                for i in $out/bin/*; do
-                  wrapProgram "$i" --prefix PATH : "$out/bin"
-                done
-              '';
+      pre-commit =
+        let
+          # See https://github.com/cachix/pre-commit-hooks.nix/issues/126
+          rust-env = pkgs.buildEnv {
+            name = "rust-env";
+            buildInputs = [ pkgs.makeWrapper ];
+            paths = [ my-rust ];
+            pathsToLink = [ "/" "/bin" ];
+            postBuild = ''
+              for i in $out/bin/*; do
+                wrapProgram "$i" --prefix PATH : "$out/bin"
+              done
+            '';
+          };
+        in
+        pre-commit-hooks.lib.${system}.run {
+          src = self;
+
+          hooks = {
+            clippy = {
+              enable = true;
+              entry = lib.mkForce "${rust-env}/bin/cargo-clippy clippy";
             };
-          in
-          pre-commit-hooks.lib.${system}.run {
-            src = self;
 
-            hooks = {
-              clippy = {
-                enable = true;
-                entry = lib.mkForce "${rust-env}/bin/cargo-clippy clippy";
-              };
+            nixpkgs-fmt = {
+              enable = true;
+            };
 
-              nixpkgs-fmt = {
-                enable = true;
-              };
-
-              rustfmt = {
-                enable = true;
-                entry = lib.mkForce "${rust-env}/bin/cargo-fmt fmt -- --check --color always";
-              };
+            rustfmt = {
+              enable = true;
+              entry = lib.mkForce "${rust-env}/bin/cargo-fmt fmt -- --check --color always";
             };
           };
-      };
+        };
+    in
+    rec {
 
       devShells = {
         default = pkgs.mkShell {
@@ -131,7 +129,7 @@
             my-rust
           ];
 
-          inherit (checks.pre-commit) shellHook;
+          inherit (pre-commit) shellHook;
 
           RUST_SRC_PATH = "${my-rust}/lib/rustlib/src/rust/library";
         };
