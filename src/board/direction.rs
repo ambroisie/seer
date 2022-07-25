@@ -139,7 +139,7 @@ impl Direction {
 
         while !board.is_empty() {
             board = self.move_board(board);
-            res = res | board;
+            res |= board;
             if !(board & blockers).is_empty() {
                 break;
             }

@@ -20,16 +20,16 @@ pub fn generate_rook_mask(square: Square) -> Bitboard {
     let mask = {
         let mut mask = Bitboard::EMPTY;
         if square.file() != File::A {
-            mask = mask | File::A.into_bitboard()
+            mask |= File::A.into_bitboard()
         };
         if square.file() != File::H {
-            mask = mask | File::H.into_bitboard()
+            mask |= File::H.into_bitboard()
         };
         if square.rank() != Rank::First {
-            mask = mask | Rank::First.into_bitboard()
+            mask |= Rank::First.into_bitboard()
         };
         if square.rank() != Rank::Eighth {
-            mask = mask | Rank::Eighth.into_bitboard()
+            mask |= Rank::Eighth.into_bitboard()
         };
         mask
     };

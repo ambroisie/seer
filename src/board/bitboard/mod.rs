@@ -115,6 +115,22 @@ impl std::ops::Shr<usize> for Bitboard {
     }
 }
 
+/// Treat bitboard as a set of squares, shift each square's index left by the amount given.
+impl std::ops::ShlAssign<usize> for Bitboard {
+    #[inline(always)]
+    fn shl_assign(&mut self, rhs: usize) {
+        *self = *self << rhs;
+    }
+}
+
+/// Treat bitboard as a set of squares, shift each square's index right by the amount given.
+impl std::ops::ShrAssign<usize> for Bitboard {
+    #[inline(always)]
+    fn shr_assign(&mut self, rhs: usize) {
+        *self = *self >> rhs;
+    }
+}
+
 /// Treat bitboard as a set of squares, and invert the set.
 impl std::ops::Not for Bitboard {
     type Output = Bitboard;
@@ -145,6 +161,22 @@ impl std::ops::BitOr<Square> for Bitboard {
     }
 }
 
+/// Treat each bitboard as a set of squares, keep squares that are in either sets.
+impl std::ops::BitOrAssign<Bitboard> for Bitboard {
+    #[inline(always)]
+    fn bitor_assign(&mut self, rhs: Bitboard) {
+        *self = *self | rhs;
+    }
+}
+
+/// Treat the [Square] as a singleton bitboard, and apply the operator.
+impl std::ops::BitOrAssign<Square> for Bitboard {
+    #[inline(always)]
+    fn bitor_assign(&mut self, rhs: Square) {
+        *self = *self | rhs;
+    }
+}
+
 /// Treat each bitboard as a set of squares, keep squares that are in both sets.
 impl std::ops::BitAnd<Bitboard> for Bitboard {
     type Output = Bitboard;
@@ -162,6 +194,22 @@ impl std::ops::BitAnd<Square> for Bitboard {
     #[inline(always)]
     fn bitand(self, rhs: Square) -> Self::Output {
         self & rhs.into_bitboard()
+    }
+}
+
+/// Treat each bitboard as a set of squares, keep squares that are in both sets.
+impl std::ops::BitAndAssign<Bitboard> for Bitboard {
+    #[inline(always)]
+    fn bitand_assign(&mut self, rhs: Bitboard) {
+        *self = *self & rhs;
+    }
+}
+
+/// Treat the [Square] as a singleton bitboard, and apply the operator.
+impl std::ops::BitAndAssign<Square> for Bitboard {
+    #[inline(always)]
+    fn bitand_assign(&mut self, rhs: Square) {
+        *self = *self & rhs;
     }
 }
 
@@ -185,6 +233,22 @@ impl std::ops::BitXor<Square> for Bitboard {
     }
 }
 
+/// Treat each bitboard as a set of squares, keep squares that are in exactly one of either set.
+impl std::ops::BitXorAssign<Bitboard> for Bitboard {
+    #[inline(always)]
+    fn bitxor_assign(&mut self, rhs: Bitboard) {
+        *self = *self ^ rhs;
+    }
+}
+
+/// Treat the [Square] as a singleton bitboard, and apply the operator.
+impl std::ops::BitXorAssign<Square> for Bitboard {
+    #[inline(always)]
+    fn bitxor_assign(&mut self, rhs: Square) {
+        *self = *self ^ rhs;
+    }
+}
+
 /// Treat each bitboard as a set of squares, and substract one set from another.
 impl std::ops::Sub<Bitboard> for Bitboard {
     type Output = Bitboard;
@@ -202,6 +266,22 @@ impl std::ops::Sub<Square> for Bitboard {
     #[inline(always)]
     fn sub(self, rhs: Square) -> Self::Output {
         self - rhs.into_bitboard()
+    }
+}
+
+/// Treat each bitboard as a set of squares, and substract one set from another.
+impl std::ops::SubAssign<Bitboard> for Bitboard {
+    #[inline(always)]
+    fn sub_assign(&mut self, rhs: Bitboard) {
+        *self = *self - rhs;
+    }
+}
+
+/// Treat the [Square] as a singleton bitboard, and apply the operator.
+impl std::ops::SubAssign<Square> for Bitboard {
+    #[inline(always)]
+    fn sub_assign(&mut self, rhs: Square) {
+        *self = *self - rhs;
     }
 }
 
