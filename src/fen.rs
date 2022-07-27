@@ -1,4 +1,4 @@
-use crate::board::{Color, File, Piece, Rank, Square};
+use crate::board::{CastleRights, Color, File, Piece, Rank, Square};
 
 /// A trait to mark items that can be converted from a FEN input.
 pub trait FromFen: Sized {
@@ -24,6 +24,39 @@ impl std::fmt::Display for FenError {
 }
 
 impl std::error::Error for FenError {}
+
+/// Convert the castling rights segment of a FEN string to an array of [CastleRights].
+impl FromFen for [CastleRights; 2] {
+    type Err = FenError;
+
+    fn from_fen(s: &str) -> Result<Self, Self::Err> {
+        if s.len() > 4 {
+            return Err(FenError::InvalidFen);
+        }
+
+        let mut res = [CastleRights::NoSide; 2];
+
+        if s == "-" {
+            return Ok(res);
+        }
+
+        for b in s.chars() {
+            let color = if b.is_uppercase() {
+                Color::White
+            } else {
+                Color::Black
+            };
+            let rights = &mut res[color.index()];
+            match b {
+                'k' | 'K' => *rights = rights.with_king_side(),
+                'q' | 'Q' => *rights = rights.with_queen_side(),
+                _ => return Err(FenError::InvalidFen),
+            }
+        }
+
+        Ok(res)
+    }
+}
 
 /// Convert a side to move segment of a FEN string to a [Color].
 impl FromFen for Color {
