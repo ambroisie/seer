@@ -53,6 +53,25 @@ impl CastleRights {
         (self.index() & 2) != 0
     }
 
+    /// Add king-side castling rights.
+    #[inline(always)]
+    pub fn with_king_side(self) -> Self {
+        self.add(Self::KingSide)
+    }
+
+    /// Add queen-side castling rights.
+    #[inline(always)]
+    pub fn with_queen_side(self) -> Self {
+        self.add(Self::QueenSide)
+    }
+
+    /// Add some [CastleRights], and return the resulting [CastleRights].
+    #[inline(always)]
+    fn add(self, additional_rights: CastleRights) -> Self {
+        // SAFETY: we know the value is in-bounds
+        unsafe { Self::from_index_unchecked(self.index() | additional_rights.index()) }
+    }
+
     /// Remove king-side castling rights.
     #[inline(always)]
     pub fn without_king_side(self) -> Self {
