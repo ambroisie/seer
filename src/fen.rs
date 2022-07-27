@@ -1,4 +1,4 @@
-use crate::board::Color;
+use crate::board::{Color, File, Rank, Square};
 
 /// A trait to mark items that can be converted from a FEN input.
 pub trait FromFen: Sized {
@@ -33,6 +33,23 @@ impl FromFen for Color {
         let res = match s {
             "w" => Color::White,
             "b" => Color::Black,
+            _ => return Err(FenError::InvalidFen),
+        };
+        Ok(res)
+    }
+}
+
+/// Convert an en-passant target square segment of a FEN string to an optional [Square].
+impl FromFen for Option<Square> {
+    type Err = FenError;
+
+    fn from_fen(s: &str) -> Result<Self, Self::Err> {
+        let res = match s.as_bytes() {
+            [b'-'] => None,
+            [file @ b'a'..=b'h', rank @ b'1'..=b'8'] => Some(Square::new(
+                File::from_index((file - b'a') as usize),
+                Rank::from_index((rank - b'1') as usize),
+            )),
             _ => return Err(FenError::InvalidFen),
         };
         Ok(res)
