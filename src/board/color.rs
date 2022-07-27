@@ -60,6 +60,16 @@ impl Color {
         }
     }
 
+    /// Return the third [Rank] for pieces of the given [Color], where its pawns move to after a
+    /// one-square move on the start position.
+    #[inline(always)]
+    pub fn third_rank(self) -> Rank {
+        match self {
+            Self::White => Rank::Third,
+            Self::Black => Rank::Sixth,
+        }
+    }
+
     /// Return the fourth [Rank] for pieces of the given [Color], where its pawns move to after a
     /// two-square move.
     #[inline(always)]
