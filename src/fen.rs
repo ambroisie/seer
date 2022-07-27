@@ -1,4 +1,4 @@
-use crate::board::{Color, File, Rank, Square};
+use crate::board::{Color, File, Piece, Rank, Square};
 
 /// A trait to mark items that can be converted from a FEN input.
 pub trait FromFen: Sized {
@@ -50,6 +50,24 @@ impl FromFen for Option<Square> {
                 File::from_index((file - b'a') as usize),
                 Rank::from_index((rank - b'1') as usize),
             )),
+            _ => return Err(FenError::InvalidFen),
+        };
+        Ok(res)
+    }
+}
+
+/// Convert a piece in FEN notation to a [Piece].
+impl FromFen for Piece {
+    type Err = FenError;
+
+    fn from_fen(s: &str) -> Result<Self, Self::Err> {
+        let res = match s {
+            "p" | "P" => Self::Pawn,
+            "n" | "N" => Self::Knight,
+            "b" | "B" => Self::Bishop,
+            "r" | "R" => Self::Rook,
+            "q" | "Q" => Self::Queen,
+            "k" | "K" => Self::King,
             _ => return Err(FenError::InvalidFen),
         };
         Ok(res)
