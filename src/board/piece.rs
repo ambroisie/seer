@@ -1,3 +1,6 @@
+use super::FromFen;
+use crate::error::Error;
+
 /// An enum representing the type of a piece.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Piece {
@@ -49,6 +52,24 @@ impl Piece {
     #[inline(always)]
     pub fn index(self) -> usize {
         self as usize
+    }
+}
+
+/// Convert a piece in FEN notation to a [Piece].
+impl FromFen for Piece {
+    type Err = Error;
+
+    fn from_fen(s: &str) -> Result<Self, Self::Err> {
+        let res = match s {
+            "p" | "P" => Self::Pawn,
+            "n" | "N" => Self::Knight,
+            "b" | "B" => Self::Bishop,
+            "r" | "R" => Self::Rook,
+            "q" | "Q" => Self::Queen,
+            "k" | "K" => Self::King,
+            _ => return Err(Error::InvalidFen),
+        };
+        Ok(res)
     }
 }
 
