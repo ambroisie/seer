@@ -1,4 +1,5 @@
-use super::{Bitboard, Color, File, Square};
+use super::{Bitboard, Color, File, FromFen, Square};
+use crate::error::Error;
 
 /// Current castle rights for a player.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -105,6 +106,39 @@ impl CastleRights {
             Self::QueenSide => queen_side_square.into_bitboard(),
             Self::BothSides => king_side_square | queen_side_square,
         }
+    }
+}
+
+/// Convert the castling rights segment of a FEN string to an array of [CastleRights].
+impl FromFen for [CastleRights; 2] {
+    type Err = Error;
+
+    fn from_fen(s: &str) -> Result<Self, Self::Err> {
+        if s.len() > 4 {
+            return Err(Error::InvalidFen);
+        }
+
+        let mut res = [CastleRights::NoSide; 2];
+
+        if s == "-" {
+            return Ok(res);
+        }
+
+        for b in s.chars() {
+            let color = if b.is_uppercase() {
+                Color::White
+            } else {
+                Color::Black
+            };
+            let rights = &mut res[color.index()];
+            match b {
+                'k' | 'K' => *rights = rights.with_king_side(),
+                'q' | 'Q' => *rights = rights.with_queen_side(),
+                _ => return Err(Error::InvalidFen),
+            }
+        }
+
+        Ok(res)
     }
 }
 
