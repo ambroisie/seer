@@ -1,3 +1,5 @@
+use crate::board::Color;
+
 /// A trait to mark items that can be converted from a FEN input.
 pub trait FromFen: Sized {
     type Err;
@@ -22,3 +24,17 @@ impl std::fmt::Display for FenError {
 }
 
 impl std::error::Error for FenError {}
+
+/// Convert a side to move segment of a FEN string to a [Color].
+impl FromFen for Color {
+    type Err = FenError;
+
+    fn from_fen(s: &str) -> Result<Self, Self::Err> {
+        let res = match s {
+            "w" => Color::White,
+            "b" => Color::Black,
+            _ => return Err(FenError::InvalidFen),
+        };
+        Ok(res)
+    }
+}
