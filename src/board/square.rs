@@ -1,5 +1,5 @@
-use super::{Bitboard, File, Rank};
-use crate::utils::static_assert;
+use super::{Bitboard, File, FromFen, Rank};
+use crate::{error::Error, utils::static_assert};
 
 /// Represent a square on a chessboard. Defined in the same order as the
 /// [Bitboard] squares.
@@ -104,6 +104,23 @@ impl Square {
     #[inline(always)]
     pub fn into_bitboard(self) -> Bitboard {
         Bitboard(1 << (self as usize))
+    }
+}
+
+/// Convert an en-passant target square segment of a FEN string to an optional [Square].
+impl FromFen for Option<Square> {
+    type Err = Error;
+
+    fn from_fen(s: &str) -> Result<Self, Self::Err> {
+        let res = match s.as_bytes() {
+            [b'-'] => None,
+            [file @ b'a'..=b'h', rank @ b'1'..=b'8'] => Some(Square::new(
+                File::from_index((file - b'a') as usize),
+                Rank::from_index((rank - b'1') as usize),
+            )),
+            _ => return Err(Error::InvalidFen),
+        };
+        Ok(res)
     }
 }
 
