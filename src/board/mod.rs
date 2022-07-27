@@ -10,6 +10,9 @@ pub use color::*;
 pub mod direction;
 pub use direction::*;
 
+pub mod fen;
+pub use fen::*;
+
 pub mod file;
 pub use file::*;
 
