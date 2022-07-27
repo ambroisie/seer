@@ -1,4 +1,5 @@
-use super::{Direction, Rank};
+use super::{Direction, FromFen, Rank};
+use crate::error::Error;
 
 /// An enum representing the color of a player.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -103,6 +104,20 @@ impl Color {
     #[inline(always)]
     pub fn backward_direction(self) -> Direction {
         (!self).forward_direction()
+    }
+}
+
+/// Convert a side to move segment of a FEN string to a [Color].
+impl FromFen for Color {
+    type Err = Error;
+
+    fn from_fen(s: &str) -> Result<Self, Self::Err> {
+        let res = match s {
+            "w" => Color::White,
+            "b" => Color::Black,
+            _ => return Err(Error::InvalidFen),
+        };
+        Ok(res)
     }
 }
 
