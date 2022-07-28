@@ -272,9 +272,103 @@ impl ChessBoard {
     }
 }
 
+/// Return a [ChessBoard] from the given FEN string.
+impl FromFen for ChessBoard {
+    type Err = Error;
+
+    fn from_fen(s: &str) -> Result<Self, Self::Err> {
+        let mut split = s.split_ascii_whitespace();
+
+        let piece_placement = split.next().ok_or(Error::InvalidFen)?;
+        let side_to_move = split.next().ok_or(Error::InvalidFen)?;
+        let castling_rights = split.next().ok_or(Error::InvalidFen)?;
+        let en_passant_square = split.next().ok_or(Error::InvalidFen)?;
+        let half_move_clock = split.next().ok_or(Error::InvalidFen)?;
+        let full_move_counter = split.next().ok_or(Error::InvalidFen)?;
+
+        let castle_rights = <[CastleRights; 2]>::from_fen(castling_rights)?;
+        let side = Color::from_fen(side_to_move)?;
+        let en_passant = Option::<Square>::from_fen(en_passant_square)?;
+
+        let half_move_clock = half_move_clock
+            .parse::<u8>()
+            .map_err(|_| Error::InvalidFen)?;
+        let full_move_counter = full_move_counter
+            .parse::<u32>()
+            .map_err(|_| Error::InvalidFen)?;
+        let total_plies = (full_move_counter - 1) * 2 + if side == Color::White { 0 } else { 1 };
+
+        let (piece_occupancy, color_occupancy, combined_occupancy) = {
+            let (mut pieces, mut colors, mut combined) =
+                ([Bitboard::EMPTY; 6], [Bitboard::EMPTY; 2], Bitboard::EMPTY);
+
+            let mut rank: usize = 8;
+            for rank_str in piece_placement.split('/') {
+                rank -= 1;
+                let mut file: usize = 0;
+                for c in rank_str.chars() {
+                    let color = if c.is_uppercase() {
+                        Color::White
+                    } else {
+                        Color::Black
+                    };
+                    let piece = match c {
+                        digit @ '1'..='8' => {
+                            // Unwrap is fine since this arm is only matched by digits
+                            file += digit.to_digit(10).unwrap() as usize;
+                            continue;
+                        }
+                        _ => Piece::from_fen(&c.to_string())?,
+                    };
+                    let (piece_board, color_board) =
+                        (&mut pieces[piece.index()], &mut colors[color.index()]);
+
+                    // Only need to worry about underflow since those are `usize` values.
+                    if file >= 8 || rank >= 8 {
+                        return Err(Error::InvalidFen);
+                    };
+                    let square = Square::new(File::from_index(file), Rank::from_index(rank));
+                    *piece_board |= square;
+                    *color_board |= square;
+                    combined |= square;
+                    file += 1;
+                }
+                // We haven't read exactly 8 files.
+                if file != 8 {
+                    return Err(Error::InvalidFen);
+                }
+            }
+            // We haven't read exactly 8 ranks
+            if rank != 0 {
+                return Err(Error::InvalidFen);
+            }
+
+            (pieces, colors, combined)
+        };
+
+        let res = Self {
+            piece_occupancy,
+            color_occupancy,
+            combined_occupancy,
+            castle_rights,
+            en_passant,
+            half_move_clock,
+            total_plies,
+            side,
+        };
+
+        if !res.is_valid() {
+            return Err(Error::InvalidPosition);
+        }
+
+        Ok(res)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::board::MoveBuilder;
 
     #[test]
     fn valid() {
@@ -512,5 +606,108 @@ mod test {
             side: Color::White,
         };
         assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn fen_default_position() {
+        let default_position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E8,
+                // Queen
+                Square::D1 | Square::D8,
+                // Rook
+                Square::A1 | Square::A8 | Square::H1 | Square::H8,
+                // Bishop
+                Square::C1 | Square::C8 | Square::F1 | Square::F8,
+                // Knight
+                Square::B1 | Square::B8 | Square::G1 | Square::G8,
+                // Pawn
+                Rank::Second.into_bitboard() | Rank::Seventh.into_bitboard(),
+            ],
+            color_occupancy: [
+                Rank::First.into_bitboard() | Rank::Second.into_bitboard(),
+                Rank::Seventh.into_bitboard() | Rank::Eighth.into_bitboard(),
+            ],
+            combined_occupancy: Rank::First.into_bitboard()
+                | Rank::Second.into_bitboard()
+                | Rank::Seventh.into_bitboard()
+                | Rank::Eighth.into_bitboard(),
+            castle_rights: [CastleRights::BothSides; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert_eq!(
+            ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+                .unwrap(),
+            default_position
+        );
+    }
+
+    #[test]
+    fn fen_en_passant() {
+        // Start from default position
+        let mut position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E8,
+                // Queen
+                Square::D1 | Square::D8,
+                // Rook
+                Square::A1 | Square::A8 | Square::H1 | Square::H8,
+                // Bishop
+                Square::C1 | Square::C8 | Square::F1 | Square::F8,
+                // Knight
+                Square::B1 | Square::B8 | Square::G1 | Square::G8,
+                // Pawn
+                Rank::Second.into_bitboard() | Rank::Seventh.into_bitboard(),
+            ],
+            color_occupancy: [
+                Rank::First.into_bitboard() | Rank::Second.into_bitboard(),
+                Rank::Seventh.into_bitboard() | Rank::Eighth.into_bitboard(),
+            ],
+            combined_occupancy: Rank::First.into_bitboard()
+                | Rank::Second.into_bitboard()
+                | Rank::Seventh.into_bitboard()
+                | Rank::Eighth.into_bitboard(),
+            castle_rights: [CastleRights::BothSides; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        // Modify it to account for e4 move
+        position.xor(Color::White, Piece::Pawn, Square::E2 | Square::E4);
+        position.en_passant = Some(Square::E3);
+        position.total_plies = 1;
+        position.side = Color::Black;
+        assert_eq!(
+            ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
+                .unwrap(),
+            position
+        );
+        // And now c5
+        position.xor(Color::Black, Piece::Pawn, Square::C5 | Square::C7);
+        position.en_passant = Some(Square::C6);
+        position.total_plies = 2;
+        position.side = Color::White;
+        assert_eq!(
+            ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2")
+                .unwrap(),
+            position
+        );
+        // Finally, Nf3
+        position.xor(Color::White, Piece::Knight, Square::G1 | Square::F3);
+        position.en_passant = None;
+        position.total_plies = 3;
+        position.half_move_clock = 1;
+        position.side = Color::Black;
+        assert_eq!(
+            ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ")
+                .unwrap(),
+            position
+        );
     }
 }
