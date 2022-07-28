@@ -4,6 +4,9 @@ pub use bitboard::*;
 pub mod castle_rights;
 pub use castle_rights::*;
 
+pub mod chess_board;
+pub use chess_board::*;
+
 pub mod color;
 pub use color::*;
 
