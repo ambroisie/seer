@@ -1,3 +1,5 @@
+use crate::fen::{FenError, FromFen};
+
 use super::{Bitboard, CastleRights, Color, File, Move, Piece, Rank, Square};
 
 /// Represent an on-going chess game.
@@ -303,8 +305,103 @@ impl Default for ChessBoard {
     }
 }
 
+/// Return a [ChessBoard] from the given FEN string.
+impl FromFen for ChessBoard {
+    type Err = FenError;
+
+    fn from_fen(s: &str) -> Result<Self, Self::Err> {
+        let mut split = s.split_ascii_whitespace();
+
+        let piece_placement = split.next().ok_or(FenError::InvalidFen)?;
+        let side_to_move = split.next().ok_or(FenError::InvalidFen)?;
+        let castling_rights = split.next().ok_or(FenError::InvalidFen)?;
+        let en_passant_square = split.next().ok_or(FenError::InvalidFen)?;
+        let half_move_clock = split.next().ok_or(FenError::InvalidFen)?;
+        let full_move_counter = split.next().ok_or(FenError::InvalidFen)?;
+
+        let castle_rights = <[CastleRights; 2]>::from_fen(castling_rights)?;
+        let side = Color::from_fen(side_to_move)?;
+        let en_passant = Option::<Square>::from_fen(en_passant_square)?;
+
+        let half_move_clock = half_move_clock
+            .parse::<u8>()
+            .map_err(|_| FenError::InvalidFen)?;
+        let full_move_counter = full_move_counter
+            .parse::<u32>()
+            .map_err(|_| FenError::InvalidFen)?;
+        let total_plies = (full_move_counter - 1) * 2 + if side == Color::White { 0 } else { 1 };
+
+        let (piece_occupancy, color_occupancy, combined_occupancy) = {
+            let (mut pieces, mut colors, mut combined) =
+                ([Bitboard::EMPTY; 6], [Bitboard::EMPTY; 2], Bitboard::EMPTY);
+
+            let mut rank: usize = 8;
+            for rank_str in piece_placement.split('/') {
+                rank -= 1;
+                let mut file: usize = 0;
+                for c in rank_str.chars() {
+                    let color = if c.is_uppercase() {
+                        Color::White
+                    } else {
+                        Color::Black
+                    };
+                    let piece = match c {
+                        digit @ '1'..='8' => {
+                            // Unwrap is fine since this arm is only matched by digits
+                            file += digit.to_digit(10).unwrap() as usize;
+                            continue;
+                        }
+                        _ => Piece::from_fen(&c.to_string())?,
+                    };
+                    let (piece_board, color_board) =
+                        (&mut pieces[piece.index()], &mut colors[color.index()]);
+
+                    // Only need to worry about underflow since those are `usize` values.
+                    if file >= 8 || rank >= 8 {
+                        return Err(FenError::InvalidFen);
+                    };
+                    let square = Square::new(File::from_index(file), Rank::from_index(rank));
+                    *piece_board |= square;
+                    *color_board |= square;
+                    combined |= square;
+                    file += 1;
+                }
+                // We haven't read exactly 8 files.
+                if file != 8 {
+                    return Err(FenError::InvalidFen);
+                }
+            }
+            // We haven't read exactly 8 ranks
+            if rank != 0 {
+                return Err(FenError::InvalidFen);
+            }
+
+            (pieces, colors, combined)
+        };
+
+        let res = Self {
+            piece_occupancy,
+            color_occupancy,
+            combined_occupancy,
+            castle_rights,
+            en_passant,
+            half_move_clock,
+            total_plies,
+            side,
+        };
+
+        if !res.is_valid() {
+            return Err(FenError::InvalidPosition);
+        }
+
+        Ok(res)
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use crate::board::MoveBuilder;
+
     use super::*;
 
     #[test]
@@ -515,5 +612,77 @@ mod test {
             side: Color::White,
         };
         assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn fen_default_position() {
+        let default_position = ChessBoard::default();
+        assert_eq!(
+            ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+                .unwrap(),
+            default_position
+        );
+    }
+
+    #[test]
+    fn fen_en_passant() {
+        // Start from default position
+        let mut position = ChessBoard::default();
+        position.do_move(
+            MoveBuilder {
+                piece: Piece::Pawn,
+                start: Square::E2,
+                destination: Square::E4,
+                capture: None,
+                promotion: None,
+                en_passant: false,
+                double_step: true,
+                castling: false,
+            }
+            .into(),
+        );
+        assert_eq!(
+            ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
+                .unwrap(),
+            position
+        );
+        // And now c5
+        position.do_move(
+            MoveBuilder {
+                piece: Piece::Pawn,
+                start: Square::C7,
+                destination: Square::C5,
+                capture: None,
+                promotion: None,
+                en_passant: false,
+                double_step: true,
+                castling: false,
+            }
+            .into(),
+        );
+        assert_eq!(
+            ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2")
+                .unwrap(),
+            position
+        );
+        // Finally, Nf3
+        position.do_move(
+            MoveBuilder {
+                piece: Piece::Knight,
+                start: Square::G1,
+                destination: Square::F3,
+                capture: None,
+                promotion: None,
+                en_passant: false,
+                double_step: false,
+                castling: false,
+            }
+            .into(),
+        );
+        assert_eq!(
+            ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ")
+                .unwrap(),
+            position
+        );
     }
 }
