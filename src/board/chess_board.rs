@@ -408,35 +408,7 @@ mod test {
 
     #[test]
     fn valid() {
-        let default_position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Square::D1 | Square::D8,
-                // Rook
-                Square::A1 | Square::A8 | Square::H1 | Square::H8,
-                // Bishop
-                Square::C1 | Square::C8 | Square::F1 | Square::F8,
-                // Knight
-                Square::B1 | Square::B8 | Square::G1 | Square::G8,
-                // Pawn
-                Rank::Second.into_bitboard() | Rank::Seventh.into_bitboard(),
-            ],
-            color_occupancy: [
-                Rank::First.into_bitboard() | Rank::Second.into_bitboard(),
-                Rank::Seventh.into_bitboard() | Rank::Eighth.into_bitboard(),
-            ],
-            combined_occupancy: Rank::First.into_bitboard()
-                | Rank::Second.into_bitboard()
-                | Rank::Seventh.into_bitboard()
-                | Rank::Eighth.into_bitboard(),
-            castle_rights: [CastleRights::BothSides; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
-        };
+        let default_position = ChessBoard::default();
         assert!(default_position.is_valid());
     }
 
@@ -646,35 +618,7 @@ mod test {
 
     #[test]
     fn fen_default_position() {
-        let default_position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Square::D1 | Square::D8,
-                // Rook
-                Square::A1 | Square::A8 | Square::H1 | Square::H8,
-                // Bishop
-                Square::C1 | Square::C8 | Square::F1 | Square::F8,
-                // Knight
-                Square::B1 | Square::B8 | Square::G1 | Square::G8,
-                // Pawn
-                Rank::Second.into_bitboard() | Rank::Seventh.into_bitboard(),
-            ],
-            color_occupancy: [
-                Rank::First.into_bitboard() | Rank::Second.into_bitboard(),
-                Rank::Seventh.into_bitboard() | Rank::Eighth.into_bitboard(),
-            ],
-            combined_occupancy: Rank::First.into_bitboard()
-                | Rank::Second.into_bitboard()
-                | Rank::Seventh.into_bitboard()
-                | Rank::Eighth.into_bitboard(),
-            castle_rights: [CastleRights::BothSides; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
-        };
+        let default_position = ChessBoard::default();
         assert_eq!(
             ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
                 .unwrap(),
@@ -685,35 +629,7 @@ mod test {
     #[test]
     fn fen_en_passant() {
         // Start from default position
-        let mut position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Square::D1 | Square::D8,
-                // Rook
-                Square::A1 | Square::A8 | Square::H1 | Square::H8,
-                // Bishop
-                Square::C1 | Square::C8 | Square::F1 | Square::F8,
-                // Knight
-                Square::B1 | Square::B8 | Square::G1 | Square::G8,
-                // Pawn
-                Rank::Second.into_bitboard() | Rank::Seventh.into_bitboard(),
-            ],
-            color_occupancy: [
-                Rank::First.into_bitboard() | Rank::Second.into_bitboard(),
-                Rank::Seventh.into_bitboard() | Rank::Eighth.into_bitboard(),
-            ],
-            combined_occupancy: Rank::First.into_bitboard()
-                | Rank::Second.into_bitboard()
-                | Rank::Seventh.into_bitboard()
-                | Rank::Eighth.into_bitboard(),
-            castle_rights: [CastleRights::BothSides; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
-        };
+        let mut position = ChessBoard::default();
         // Modify it to account for e4 move
         position.xor(Color::White, Piece::Pawn, Square::E2 | Square::E4);
         position.en_passant = Some(Square::E3);
@@ -750,35 +666,7 @@ mod test {
     #[test]
     fn do_move() {
         // Start from default position
-        let mut position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Square::D1 | Square::D8,
-                // Rook
-                Square::A1 | Square::A8 | Square::H1 | Square::H8,
-                // Bishop
-                Square::C1 | Square::C8 | Square::F1 | Square::F8,
-                // Knight
-                Square::B1 | Square::B8 | Square::G1 | Square::G8,
-                // Pawn
-                Rank::Second.into_bitboard() | Rank::Seventh.into_bitboard(),
-            ],
-            color_occupancy: [
-                Rank::First.into_bitboard() | Rank::Second.into_bitboard(),
-                Rank::Seventh.into_bitboard() | Rank::Eighth.into_bitboard(),
-            ],
-            combined_occupancy: Rank::First.into_bitboard()
-                | Rank::Second.into_bitboard()
-                | Rank::Seventh.into_bitboard()
-                | Rank::Eighth.into_bitboard(),
-            castle_rights: [CastleRights::BothSides; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
-        };
+        let mut position = ChessBoard::default();
         // Modify it to account for e4 move
         position.do_move(
             MoveBuilder {
@@ -841,35 +729,7 @@ mod test {
     #[test]
     fn do_move_and_undo() {
         // Start from default position
-        let mut position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Square::D1 | Square::D8,
-                // Rook
-                Square::A1 | Square::A8 | Square::H1 | Square::H8,
-                // Bishop
-                Square::C1 | Square::C8 | Square::F1 | Square::F8,
-                // Knight
-                Square::B1 | Square::B8 | Square::G1 | Square::G8,
-                // Pawn
-                Rank::Second.into_bitboard() | Rank::Seventh.into_bitboard(),
-            ],
-            color_occupancy: [
-                Rank::First.into_bitboard() | Rank::Second.into_bitboard(),
-                Rank::Seventh.into_bitboard() | Rank::Eighth.into_bitboard(),
-            ],
-            combined_occupancy: Rank::First.into_bitboard()
-                | Rank::Second.into_bitboard()
-                | Rank::Seventh.into_bitboard()
-                | Rank::Eighth.into_bitboard(),
-            castle_rights: [CastleRights::BothSides; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
-        };
+        let mut position = ChessBoard::default();
         // Modify it to account for e4 move
         let move_1 = MoveBuilder {
             piece: Piece::Pawn,
