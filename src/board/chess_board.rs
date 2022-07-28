@@ -178,6 +178,93 @@ impl ChessBoard {
         self.total_plies -= 1;
         self.side = !self.side;
     }
+
+    /// Return true if the current state of the board looks valid, false if something is definitely
+    /// wrong.
+    pub fn is_valid(&self) -> bool {
+        // Don't overlap pieces.
+        for piece in Piece::iter() {
+            #[allow(clippy::collapsible_if)]
+            for other in Piece::iter() {
+                if piece != other {
+                    if !(self.piece_occupancy(piece) & self.piece_occupancy(other)).is_empty() {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // Don't overlap colors.
+        if !(self.color_occupancy(Color::White) & self.color_occupancy(Color::Black)).is_empty() {
+            return false;
+        }
+
+        // Calculate the union of all pieces.
+        let combined =
+            Piece::iter().fold(Bitboard::EMPTY, |board, p| board | self.piece_occupancy(p));
+
+        // Ensure that the pre-computed version is accurate.
+        if combined != self.combined_occupancy() {
+            return false;
+        }
+
+        // Ensure that all pieces belong to a color, and no color has pieces that don't exist.
+        if combined != (self.color_occupancy(Color::White) | self.color_occupancy(Color::Black)) {
+            return false;
+        }
+
+        // Have exactly one king of each color.
+        for color in Color::iter() {
+            if (self.piece_occupancy(Piece::King) & self.color_occupancy(color)).count() != 1 {
+                return false;
+            }
+        }
+
+        // Verify that rooks and kings that are allowed to castle have not been moved.
+        for color in Color::iter() {
+            let castle_rights = self.castle_rights(color);
+
+            // Nothing to check if there are no castlings allowed.
+            if castle_rights == CastleRights::NoSide {
+                continue;
+            }
+
+            let actual_rooks = self.piece_occupancy(Piece::Rook) & self.color_occupancy(color);
+            let expected_rooks = castle_rights.unmoved_rooks(color);
+            // We must check the intersection, in case there are more than 2 rooks on the board.
+            if (expected_rooks & actual_rooks) != expected_rooks {
+                return false;
+            }
+
+            let actual_king = self.piece_occupancy(Piece::King) & self.color_occupancy(color);
+            let expected_king = Square::new(File::E, color.first_rank());
+            // We have checked that there is exactly one king, no need for intersecting the sets.
+            if actual_king != expected_king.into_bitboard() {
+                return false;
+            }
+        }
+
+        // The current en-passant target square must be empty, right behind an opponent's pawn.
+        if let Some(square) = self.en_passant() {
+            if !(self.combined_occupancy() & square).is_empty() {
+                return false;
+            }
+            let opponent_pawns =
+                self.piece_occupancy(Piece::Pawn) & self.color_occupancy(!self.current_player());
+            let double_pushed_pawn = self
+                .current_player()
+                .backward_direction()
+                .move_board(square.into_bitboard());
+            if (opponent_pawns & double_pushed_pawn).is_empty() {
+                return false;
+            }
+        }
+
+        // FIXME: check for opponent being in check.
+        // FIXME: check for kings touching.
+
+        true
+    }
 }
 
 /// Use the starting position as a default value, corresponding to the
@@ -213,5 +300,220 @@ impl Default for ChessBoard {
             total_plies: 0,
             side: Color::White,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn valid() {
+        let default_position = ChessBoard::default();
+        assert!(default_position.is_valid());
+    }
+
+    #[test]
+    fn invalid_overlapping_pieces() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E8,
+                // Queen
+                Square::E1 | Square::E8,
+                // Rook
+                Bitboard::EMPTY,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                Bitboard::EMPTY,
+            ],
+            color_occupancy: [Square::E1.into_bitboard(), Square::E8.into_bitboard()],
+            combined_occupancy: Square::E1 | Square::E8,
+            castle_rights: [CastleRights::NoSide; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn invalid_overlapping_colors() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E8,
+                // Queen
+                Bitboard::EMPTY,
+                // Rook
+                Bitboard::EMPTY,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                Bitboard::EMPTY,
+            ],
+            color_occupancy: [Square::E1 | Square::E8, Square::E1 | Square::E8],
+            combined_occupancy: Square::E1 | Square::E8,
+            castle_rights: [CastleRights::NoSide; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn invalid_combined_does_not_equal_pieces() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E8,
+                // Queen
+                Bitboard::EMPTY,
+                // Rook
+                Bitboard::EMPTY,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                Bitboard::EMPTY,
+            ],
+            color_occupancy: [Square::E1.into_bitboard(), Square::E8.into_bitboard()],
+            combined_occupancy: Square::E1.into_bitboard(),
+            castle_rights: [CastleRights::NoSide; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn invalid_combined_does_not_equal_colors() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E8,
+                // Queen
+                Bitboard::EMPTY,
+                // Rook
+                Bitboard::EMPTY,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                Bitboard::EMPTY,
+            ],
+            color_occupancy: [Square::E1 | Square::H1, Square::E8 | Square::H8],
+            combined_occupancy: Square::E1 | Square::E8,
+            castle_rights: [CastleRights::NoSide; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn invalid_multiple_kings() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E2 | Square::E7 | Square::E8,
+                // Queen
+                Bitboard::EMPTY,
+                // Rook
+                Bitboard::EMPTY,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                Bitboard::EMPTY,
+            ],
+            color_occupancy: [Square::E1 | Square::E2, Square::E7 | Square::E8],
+            combined_occupancy: Square::E1 | Square::E2 | Square::E7 | Square::E8,
+            castle_rights: [CastleRights::NoSide; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn invalid_castling_rights_no_rooks() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E8,
+                // Queen
+                Bitboard::EMPTY,
+                // Rook
+                Bitboard::EMPTY,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                Bitboard::EMPTY,
+            ],
+            color_occupancy: [Square::E1.into_bitboard(), Square::E8.into_bitboard()],
+            combined_occupancy: Square::E1 | Square::E8,
+            castle_rights: [CastleRights::BothSides; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn invalid_castling_rights_moved_king() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E2 | Square::E7,
+                // Queen
+                Bitboard::EMPTY,
+                // Rook
+                Square::A1 | Square::A8 | Square::H1 | Square::H8,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                Bitboard::EMPTY,
+            ],
+            color_occupancy: [
+                Square::A1 | Square::E2 | Square::H1,
+                Square::A8 | Square::E7 | Square::H8,
+            ],
+            combined_occupancy: Square::A1
+                | Square::A8
+                | Square::E1
+                | Square::E8
+                | Square::H1
+                | Square::H8,
+            castle_rights: [CastleRights::BothSides; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
     }
 }
