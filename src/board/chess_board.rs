@@ -710,4 +710,187 @@ mod test {
             position
         );
     }
+
+    #[test]
+    fn do_move() {
+        // Start from default position
+        let mut position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E8,
+                // Queen
+                Square::D1 | Square::D8,
+                // Rook
+                Square::A1 | Square::A8 | Square::H1 | Square::H8,
+                // Bishop
+                Square::C1 | Square::C8 | Square::F1 | Square::F8,
+                // Knight
+                Square::B1 | Square::B8 | Square::G1 | Square::G8,
+                // Pawn
+                Rank::Second.into_bitboard() | Rank::Seventh.into_bitboard(),
+            ],
+            color_occupancy: [
+                Rank::First.into_bitboard() | Rank::Second.into_bitboard(),
+                Rank::Seventh.into_bitboard() | Rank::Eighth.into_bitboard(),
+            ],
+            combined_occupancy: Rank::First.into_bitboard()
+                | Rank::Second.into_bitboard()
+                | Rank::Seventh.into_bitboard()
+                | Rank::Eighth.into_bitboard(),
+            castle_rights: [CastleRights::BothSides; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        // Modify it to account for e4 move
+        position.do_move(
+            MoveBuilder {
+                piece: Piece::Pawn,
+                start: Square::E2,
+                destination: Square::E4,
+                capture: None,
+                promotion: None,
+                en_passant: false,
+                double_step: true,
+                castling: false,
+            }
+            .into(),
+        );
+        assert_eq!(
+            position,
+            ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
+                .unwrap()
+        );
+        // And now c5
+        position.do_move(
+            MoveBuilder {
+                piece: Piece::Pawn,
+                start: Square::C7,
+                destination: Square::C5,
+                capture: None,
+                promotion: None,
+                en_passant: false,
+                double_step: true,
+                castling: false,
+            }
+            .into(),
+        );
+        assert_eq!(
+            position,
+            ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2")
+                .unwrap()
+        );
+        // Finally, Nf3
+        position.do_move(
+            MoveBuilder {
+                piece: Piece::Knight,
+                start: Square::G1,
+                destination: Square::F3,
+                capture: None,
+                promotion: None,
+                en_passant: false,
+                double_step: false,
+                castling: false,
+            }
+            .into(),
+        );
+        assert_eq!(
+            position,
+            ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ")
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn do_move_and_undo() {
+        // Start from default position
+        let mut position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E8,
+                // Queen
+                Square::D1 | Square::D8,
+                // Rook
+                Square::A1 | Square::A8 | Square::H1 | Square::H8,
+                // Bishop
+                Square::C1 | Square::C8 | Square::F1 | Square::F8,
+                // Knight
+                Square::B1 | Square::B8 | Square::G1 | Square::G8,
+                // Pawn
+                Rank::Second.into_bitboard() | Rank::Seventh.into_bitboard(),
+            ],
+            color_occupancy: [
+                Rank::First.into_bitboard() | Rank::Second.into_bitboard(),
+                Rank::Seventh.into_bitboard() | Rank::Eighth.into_bitboard(),
+            ],
+            combined_occupancy: Rank::First.into_bitboard()
+                | Rank::Second.into_bitboard()
+                | Rank::Seventh.into_bitboard()
+                | Rank::Eighth.into_bitboard(),
+            castle_rights: [CastleRights::BothSides; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        // Modify it to account for e4 move
+        let move_1 = MoveBuilder {
+            piece: Piece::Pawn,
+            start: Square::E2,
+            destination: Square::E4,
+            capture: None,
+            promotion: None,
+            en_passant: false,
+            double_step: true,
+            castling: false,
+        }
+        .into();
+        let state_1 = position.do_move(move_1);
+        // And now c5
+        let move_2 = MoveBuilder {
+            piece: Piece::Pawn,
+            start: Square::C7,
+            destination: Square::C5,
+            capture: None,
+            promotion: None,
+            en_passant: false,
+            double_step: true,
+            castling: false,
+        }
+        .into();
+        let state_2 = position.do_move(move_2);
+        // Finally, Nf3
+        let move_3 = MoveBuilder {
+            piece: Piece::Knight,
+            start: Square::G1,
+            destination: Square::F3,
+            capture: None,
+            promotion: None,
+            en_passant: false,
+            double_step: false,
+            castling: false,
+        }
+        .into();
+        let state_3 = position.do_move(move_3);
+        // Now revert each move one-by-one
+        position.undo_move(move_3, state_3);
+        assert_eq!(
+            position,
+            ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2")
+                .unwrap()
+        );
+        position.undo_move(move_2, state_2);
+        assert_eq!(
+            position,
+            ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
+                .unwrap()
+        );
+        position.undo_move(move_1, state_1);
+        assert_eq!(
+            position,
+            ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+                .unwrap()
+        );
+    }
 }
