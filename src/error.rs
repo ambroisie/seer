@@ -1,5 +1,6 @@
 /// A singular type for all errors that could happen when using this library.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[non_exhaustive]
 pub enum Error {
     InvalidFen,
     InvalidPosition,
