@@ -1,4 +1,4 @@
-use super::{Bitboard, CastleRights, Color, Piece, Square};
+use super::{Bitboard, CastleRights, Color, File, Move, Piece, Square};
 
 /// Represent an on-going chess game.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -23,6 +23,14 @@ pub struct ChessBoard {
     side: Color,
 }
 
+/// The state which can't be reversed when doing/un-doing a [Move].
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct NonReversibleState {
+    castle_rights: [CastleRights; Color::NUM_VARIANTS],
+    en_passant: Option<Square>,
+    half_move_clock: u8, // Should never go higher than 50.
+}
+
 impl ChessBoard {
     /// Which player's turn is it.
     #[inline(always)]
@@ -44,7 +52,6 @@ impl ChessBoard {
 
     /// Return the [CastleRights] for the given [Color]. Allow mutations.
     #[inline(always)]
-    #[allow(unused)]
     fn castle_rights_mut(&mut self, color: Color) -> &mut CastleRights {
         &mut self.castle_rights[color.index()]
     }
@@ -58,7 +65,6 @@ impl ChessBoard {
     /// Get the [Bitboard] representing all pieces of the given [Piece] type, discarding color.
     /// Allow mutating the state.
     #[inline(always)]
-    #[allow(unused)]
     fn piece_occupancy_mut(&mut self, piece: Piece) -> &mut Bitboard {
         &mut self.piece_occupancy[piece.index()]
     }
@@ -73,7 +79,6 @@ impl ChessBoard {
     /// Get the [Bitboard] representing all colors of the given [Color] type, discarding piece
     /// type. Allow mutating the state.
     #[inline(always)]
-    #[allow(unused)]
     fn color_occupancy_mut(&mut self, color: Color) -> &mut Bitboard {
         &mut self.color_occupancy[color.index()]
     }
@@ -94,5 +99,83 @@ impl ChessBoard {
     #[inline(always)]
     pub fn total_plies(&self) -> u32 {
         self.total_plies
+    }
+
+    /// Quickly do and undo a move on the [Bitboard]s that are part of the [ChessBoard] state. Does
+    /// not account for all non-revertible changes such as en-passant state or half-move clock.
+    #[inline(always)]
+    fn xor(&mut self, color: Color, piece: Piece, start_end: Bitboard) {
+        *self.piece_occupancy_mut(piece) ^= start_end;
+        *self.color_occupancy_mut(color) ^= start_end;
+        self.combined_occupancy ^= start_end;
+    }
+
+    /// Play the given [Move], returning all non-revertible state (e.g: en-passant, etc...).
+    #[inline(always)]
+    pub fn do_move(&mut self, chess_move: Move) -> NonReversibleState {
+        // Save non-revertible state
+        let state = NonReversibleState {
+            castle_rights: self.castle_rights,
+            en_passant: self.en_passant,
+            half_move_clock: self.half_move_clock,
+        };
+
+        // Non-revertible state modification
+        if chess_move.capture().is_some() || chess_move.piece() == Piece::Pawn {
+            self.half_move_clock = 0;
+        } else {
+            self.half_move_clock += 1;
+        }
+        if chess_move.is_double_step() {
+            let target_square = Square::new(
+                chess_move.destination().file(),
+                self.current_player().third_rank(),
+            );
+            self.en_passant = Some(target_square);
+        } else {
+            self.en_passant = None;
+        }
+        if chess_move.is_castling() || chess_move.piece() == Piece::King {
+            *self.castle_rights_mut(self.current_player()) = CastleRights::NoSide;
+        }
+        if chess_move.piece() == Piece::Rook {
+            let castle_rights = self.castle_rights_mut(self.current_player());
+            *castle_rights = match chess_move.start().file() {
+                File::A => castle_rights.without_queen_side(),
+                File::H => castle_rights.without_king_side(),
+                _ => *castle_rights,
+            }
+        }
+
+        // Revertible state modification
+        self.xor(
+            self.current_player(),
+            chess_move.piece(),
+            chess_move.start() | chess_move.destination(),
+        );
+        self.total_plies += 1;
+        self.side = !self.side;
+
+        state
+    }
+
+    /// Reverse the effect of playing the given [Move], and return to the given
+    /// [NonReversibleState].
+    #[inline(always)]
+    pub fn undo_move(&mut self, chess_move: Move, previous: NonReversibleState) {
+        // Restore non-revertible state
+        self.castle_rights = previous.castle_rights;
+        self.en_passant = previous.en_passant;
+        self.half_move_clock = previous.half_move_clock;
+
+        // Restore revertible state
+        self.xor(
+            // The move was applied at the turn *before* the current player
+            !self.current_player(),
+            chess_move.piece(),
+            chess_move.start() | chess_move.destination(),
+        );
+        self.total_plies -= 1;
+        self.side = !self.side;
     }
 }
