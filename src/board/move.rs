@@ -84,6 +84,7 @@ mod shift {
 
 impl Move {
     /// Construct a new move.
+    #[allow(clippy::too_many_arguments)]
     #[inline(always)]
     fn new(
         piece: Piece,

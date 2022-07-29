@@ -190,6 +190,7 @@ impl ChessBoard {
     fn is_valid(&self) -> bool {
         // Don't overlap pieces.
         for piece in Piece::iter() {
+            #[allow(clippy::collapsible_if)]
             for other in Piece::iter() {
                 if piece != other {
                     if !(self.piece_occupancy(piece) & self.piece_occupancy(other)).is_empty() {

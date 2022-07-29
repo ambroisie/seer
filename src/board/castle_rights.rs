@@ -67,6 +67,7 @@ impl CastleRights {
     }
 
     /// Add some [CastleRights], and return the resulting [CastleRights].
+    #[allow(clippy::should_implement_trait)]
     #[inline(always)]
     pub fn add(self, to_remove: CastleRights) -> Self {
         // SAFETY: we know the value is in-bounds
