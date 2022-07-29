@@ -11,7 +11,8 @@ impl Iterator for BitboardIterator {
         } else {
             let lsb = self.0.trailing_zeros() as usize;
             self.0 ^= 1 << lsb;
-            Some(crate::board::Square::from_index(lsb))
+            // SAFETY: we know the value is in-bounds
+            Some(unsafe { crate::board::Square::from_index_unchecked(lsb) })
         }
     }
 
