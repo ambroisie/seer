@@ -76,6 +76,18 @@ impl Bitboard {
     pub fn iter_power_set(self) -> impl Iterator<Item = Self> {
         BitboardPowerSetIterator::new(self)
     }
+
+    /// If the given [Bitboard] is a singleton piece on a board, return the [Square] that it is
+    /// occupying. Otherwise return `None`.
+    pub fn try_into_square(self) -> Option<Square> {
+        if self.count() != 1 {
+            None
+        } else {
+            let index = self.0.trailing_zeros() as usize;
+            // SAFETY: we know the value is in-bounds
+            Some(unsafe { Square::from_index_unchecked(index) })
+        }
+    }
 }
 
 // Ensure zero-cost (at least size-wise) wrapping.
@@ -449,5 +461,18 @@ mod test {
                 .len(),
             1 << 8
         );
+    }
+
+    #[test]
+    fn into_square() {
+        for square in Square::iter() {
+            assert_eq!(square.into_bitboard().try_into_square(), Some(square));
+        }
+    }
+
+    #[test]
+    fn into_square_invalid() {
+        assert!(Bitboard::EMPTY.try_into_square().is_none());
+        assert!((Square::A1 | Square::A2).try_into_square().is_none())
     }
 }
