@@ -1,6 +1,8 @@
 use super::Square;
 use crate::utils::static_assert;
 
+mod error;
+use error::*;
 mod iterator;
 use iterator::*;
 mod superset;
@@ -99,6 +101,21 @@ impl IntoIterator for Bitboard {
 
     fn into_iter(self) -> Self::IntoIter {
         BitboardIterator::new(self)
+    }
+}
+
+/// If the given [Bitboard] is a singleton piece on a board, return the [Square] that it is
+/// occupying. Otherwise return `None`.
+impl TryInto<Square> for Bitboard {
+    type Error = IntoSquareError;
+
+    fn try_into(self) -> Result<Square, Self::Error> {
+        let index = match self.count() {
+            1 => self.0.trailing_zeros() as usize,
+            0 => return Err(IntoSquareError::EmptyBoard),
+            _ => return Err(IntoSquareError::TooManySquares),
+        };
+        Ok(Square::from_index(index))
     }
 }
 
@@ -460,5 +477,24 @@ mod test {
                 .len(),
             1 << 8
         );
+    }
+
+    #[test]
+    fn into_square() {
+        for square in Square::iter() {
+            assert_eq!(square.into_bitboard().try_into(), Ok(square));
+        }
+    }
+
+    #[test]
+    fn into_square_invalid() {
+        assert_eq!(
+            TryInto::<Square>::try_into(Bitboard::EMPTY),
+            Err(IntoSquareError::EmptyBoard)
+        );
+        assert_eq!(
+            TryInto::<Square>::try_into(Square::A1 | Square::A2),
+            Err(IntoSquareError::TooManySquares)
+        )
     }
 }
