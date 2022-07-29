@@ -22,5 +22,46 @@ impl Magic {
 
 #[cfg(generated_boards)]
 mod moves;
-#[cfg(generated_boards)]
 pub use moves::*;
+
+#[cfg(not(generated_boards))]
+#[allow(unused_variables)]
+mod moves {
+    use crate::board::{Bitboard, Color, Square};
+
+    pub fn quiet_pawn_moves(color: Color, square: Square, blockers: Bitboard) -> Bitboard {
+        unreachable!()
+    }
+
+    pub fn pawn_moves(color: Color, square: Square, blockers: Bitboard) -> Bitboard {
+        unreachable!()
+    }
+
+    pub fn knight_moves(square: Square) -> Bitboard {
+        unreachable!()
+    }
+
+    pub fn bishop_moves(square: Square, blockers: Bitboard) -> Bitboard {
+        unreachable!()
+    }
+
+    pub fn rook_moves(square: Square, blockers: Bitboard) -> Bitboard {
+        unreachable!()
+    }
+
+    pub fn queen_moves(square: Square, blockers: Bitboard) -> Bitboard {
+        unreachable!()
+    }
+
+    pub fn king_moves(square: Square) -> Bitboard {
+        unreachable!()
+    }
+
+    pub fn king_side_castle_blockers(color: Color) -> Bitboard {
+        unreachable!()
+    }
+
+    pub fn queen_side_castle_blockers(color: Color) -> Bitboard {
+        unreachable!()
+    }
+}
