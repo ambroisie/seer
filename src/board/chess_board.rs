@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::{error::Error, movegen::magic::king_moves};
 
 use super::{Bitboard, CastleRights, Color, File, FromFen, Move, Piece, Rank, Square};
 
@@ -266,8 +266,15 @@ impl ChessBoard {
             }
         }
 
+        // Check that kings don't touch each other.
+        let white_king = self.piece_occupancy(Piece::King) & self.color_occupancy(Color::White);
+        let black_king = self.piece_occupancy(Piece::King) & self.color_occupancy(Color::Black);
+        // Unwrap is fine, we already checked that there is exactly one king of each color
+        if !(king_moves(white_king.try_into_square().unwrap()) & black_king).is_empty() {
+            return false;
+        }
+
         // FIXME: check for opponent being in check.
-        // FIXME: check for kings touching.
 
         true
     }
@@ -609,6 +616,34 @@ mod test {
                 | Square::H1
                 | Square::H8,
             castle_rights: [CastleRights::BothSides; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn invalid_kings_next_to_each_other() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E2 | Square::E3,
+                // Queen
+                Bitboard::EMPTY,
+                // Rook
+                Bitboard::EMPTY,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                Bitboard::EMPTY,
+            ],
+            color_occupancy: [Square::E2.into_bitboard(), Square::E3.into_bitboard()],
+            combined_occupancy: Square::E2 | Square::E3,
+            castle_rights: [CastleRights::NoSide; 2],
             en_passant: None,
             half_move_clock: 0,
             total_plies: 0,
