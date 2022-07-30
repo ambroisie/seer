@@ -1,4 +1,9 @@
-use crate::{error::Error, movegen::magic::king_moves};
+use crate::{
+    error::Error,
+    movegen::{
+        bishop_moves, knight_moves, magic::king_moves, naive::pawn::pawn_captures, rook_moves,
+    },
+};
 
 use super::{Bitboard, CastleRights, Color, File, FromFen, Move, Piece, Rank, Square};
 
@@ -274,9 +279,49 @@ impl ChessBoard {
             return false;
         }
 
-        // FIXME: check for opponent being in check.
+        // Check that the opponent is not currently in check.
+        if (self.compute_checkers(!self.current_player())) != Bitboard::EMPTY {
+            return false;
+        }
 
         true
+    }
+
+    /// Compute all pieces that are currently threatening the given [Color]'s king.
+    fn compute_checkers(&self, color: Color) -> Bitboard {
+        // Unwrap is fine, there should always be exactly one king per color
+        let king = (self.piece_occupancy(Piece::King) & self.color_occupancy(color))
+            .try_into_square()
+            .unwrap();
+
+        let opponent = !color;
+
+        // No need to remove our pieces from the generated moves, we just want to check if we
+        // intersect with the opponent's pieces, rather than generate only valid moves.
+        let bishops = {
+            let queens = self.piece_occupancy(Piece::Queen) & self.color_occupancy(opponent);
+            let bishops = self.piece_occupancy(Piece::Bishop) & self.color_occupancy(opponent);
+            let bishop_attacks = bishop_moves(king, self.combined_occupancy());
+            (queens | bishops) & bishop_attacks
+        };
+        let rooks = {
+            let queens = self.piece_occupancy(Piece::Queen) & self.color_occupancy(opponent);
+            let rooks = self.piece_occupancy(Piece::Rook) & self.color_occupancy(opponent);
+            let rook_attacks = rook_moves(king, self.combined_occupancy());
+            (queens | rooks) & rook_attacks
+        };
+        let knights = {
+            let knights = self.piece_occupancy(Piece::Knight) & self.color_occupancy(opponent);
+            let knight_attacks = knight_moves(king);
+            knights & knight_attacks
+        };
+        let pawns = {
+            let pawns = self.piece_occupancy(Piece::Pawn) & self.color_occupancy(opponent);
+            let pawn_attacks = pawn_captures(color, king);
+            pawns & pawn_attacks
+        };
+
+        bishops | rooks | knights | pawns
     }
 }
 
@@ -643,6 +688,34 @@ mod test {
             ],
             color_occupancy: [Square::E2.into_bitboard(), Square::E3.into_bitboard()],
             combined_occupancy: Square::E2 | Square::E3,
+            castle_rights: [CastleRights::NoSide; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn invalid_opponent_in_check() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E1 | Square::E8,
+                // Queen
+                Square::E7.into_bitboard(),
+                // Rook
+                Bitboard::EMPTY,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                Bitboard::EMPTY,
+            ],
+            color_occupancy: [Square::E1 | Square::E7, Square::E8.into_bitboard()],
+            combined_occupancy: Square::E1 | Square::E7 | Square::E8,
             castle_rights: [CastleRights::NoSide; 2],
             en_passant: None,
             half_move_clock: 0,
