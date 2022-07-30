@@ -112,6 +112,13 @@ impl ChessBoard {
         self.total_plies
     }
 
+    /// Return the [Bitboard] corresponding to all the opponent's pieces threatening the current
+    /// player's king.
+    #[inline(always)]
+    pub fn checkers(&self) -> Bitboard {
+        self.compute_checkers(self.current_player())
+    }
+
     /// Quickly do and undo a move on the [Bitboard]s that are part of the [ChessBoard] state. Does
     /// not account for all non-revertible changes such as en-passant state or half-move clock.
     #[inline(always)]
@@ -723,6 +730,49 @@ mod test {
             side: Color::White,
         };
         assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn checkers() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::E2 | Square::E8,
+                // Queen
+                Square::E7 | Square::H2,
+                // Rook
+                Square::A2 | Square::E1,
+                // Bishop
+                Square::D3 | Square::F3,
+                // Knight
+                Square::C1 | Square::G1,
+                // Pawn
+                Bitboard::EMPTY,
+            ],
+            color_occupancy: [
+                Square::C1 | Square::D3 | Square::E1 | Square::E2 | Square::H2,
+                Square::A2 | Square::E7 | Square::E8 | Square::F3 | Square::G1,
+            ],
+            combined_occupancy: Square::A2
+                | Square::C1
+                | Square::D3
+                | Square::E1
+                | Square::E2
+                | Square::E7
+                | Square::E8
+                | Square::F3
+                | Square::G1
+                | Square::H2,
+            castle_rights: [CastleRights::NoSide; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert_eq!(
+            position.checkers(),
+            Square::A2 | Square::E7 | Square::F3 | Square::G1
+        );
     }
 
     #[test]
