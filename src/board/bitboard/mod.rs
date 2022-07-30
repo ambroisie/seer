@@ -68,6 +68,13 @@ impl Bitboard {
         self == Self::EMPTY
     }
 
+    /// Return true if there are more than piece in the [Bitboard]. This is faster than testing
+    /// `board.count() > 1`.
+    #[inline(always)]
+    pub fn has_more_than_one(self) -> bool {
+        (self.0 & (self.0.wrapping_sub(1))) != 0
+    }
+
     /// Iterate over the power-set of a given [Bitboard], yielding each possible sub-set of
     /// [Square] that belong to the [Bitboard]. In other words, generate all set of [Square] that
     /// contain all, some, or none of the [Square] that are in the given [Bitboard].
@@ -386,6 +393,16 @@ mod test {
     fn sub() {
         assert_eq!(Bitboard::FILES[0] - Bitboard::RANKS[0], Bitboard(0xff - 1));
         assert_eq!(Bitboard::FILES[0] - Square::A1, Bitboard(0xff - 1));
+    }
+
+    #[test]
+    fn more_than_one() {
+        assert!(!Bitboard::EMPTY.has_more_than_one());
+        for square in Square::iter() {
+            assert!(!square.into_bitboard().has_more_than_one())
+        }
+        assert!((Square::A1 | Square::H8).has_more_than_one());
+        assert!(Bitboard::ALL.has_more_than_one());
     }
 
     #[test]
