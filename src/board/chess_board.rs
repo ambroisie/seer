@@ -119,6 +119,24 @@ impl ChessBoard {
         self.compute_checkers(self.current_player())
     }
 
+    /// Convenience function which returns the [Piece] and [Color] at a given [Square], or `None`
+    /// if it is empty.
+    pub fn at(&self, square: Square) -> Option<(Piece, Color)> {
+        let color = if !(self.color_occupancy(Color::White) & square).is_empty() {
+            Color::White
+        } else {
+            Color::Black
+        };
+
+        for piece in Piece::iter() {
+            if !(self.piece_occupancy(piece) & square).is_empty() {
+                return Some((piece, color));
+            }
+        }
+
+        None
+    }
+
     /// Quickly do and undo a move on the [Bitboard]s that are part of the [ChessBoard] state. Does
     /// not account for all non-revertible changes such as en-passant state or half-move clock.
     #[inline(always)]
@@ -772,6 +790,38 @@ mod test {
         assert_eq!(
             position.checkers(),
             Square::A2 | Square::E7 | Square::F3 | Square::G1
+        );
+    }
+
+    #[test]
+    fn at() {
+        let default_position = ChessBoard::default();
+        assert_eq!(default_position.at(Square::D4), None);
+        assert_eq!(default_position.at(Square::D5), None);
+
+        assert_eq!(
+            default_position.at(Square::A1).unwrap(),
+            (Piece::Rook, Color::White)
+        );
+        assert_eq!(
+            default_position.at(Square::H8).unwrap(),
+            (Piece::Rook, Color::Black)
+        );
+        assert_eq!(
+            default_position.at(Square::D1).unwrap(),
+            (Piece::Queen, Color::White)
+        );
+        assert_eq!(
+            default_position.at(Square::D8).unwrap(),
+            (Piece::Queen, Color::Black)
+        );
+        assert_eq!(
+            default_position.at(Square::C2).unwrap(),
+            (Piece::Pawn, Color::White)
+        );
+        assert_eq!(
+            default_position.at(Square::F7).unwrap(),
+            (Piece::Pawn, Color::Black)
         );
     }
 
