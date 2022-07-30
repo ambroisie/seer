@@ -16,6 +16,13 @@ steps:
   commands:
   - nix build
 
+- name: miri check
+  commands:
+  - export HOME="$(mktemp -d)"
+  - nix develop . --command cargo miri setup
+  - export PATH="$HOME/.cargo/bin:$PATH"
+  - RUST_BACKTRACE=1 nix develop . --command cargo miri test
+
 - name: notifiy
   commands:
   - nix run github:ambroisie/matrix-notifier

@@ -72,9 +72,11 @@
     let
       overlays = [ (import rust-overlay) ];
       pkgs = import nixpkgs { inherit overlays system; };
-      my-rust = pkgs.rust-bin.stable.latest.default.override {
-        extensions = [ "rust-src" ];
-      };
+      my-rust = pkgs.rust-bin.selectLatestNightlyWith (toolchain:
+        toolchain.default.override {
+          extensions = [ "rust-src" "miri" ];
+        }
+      );
       naersk-lib = naersk.lib."${system}".override {
         cargo = my-rust;
         rustc = my-rust;
