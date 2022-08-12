@@ -238,6 +238,14 @@ impl ChessBoard {
             }
         }
 
+        // Check that pawns aren't in first/last rank.
+        if !(self.piece_occupancy(Piece::Pawn)
+            & (Rank::First.into_bitboard() | Rank::Eighth.into_bitboard()))
+        .is_empty()
+        {
+            return false;
+        }
+
         // Verify that rooks and kings that are allowed to castle have not been moved.
         for color in Color::iter() {
             let castle_rights = self.castle_rights(color);
@@ -721,6 +729,34 @@ mod test {
             ],
             color_occupancy: [Square::E1 | Square::E7, Square::E8.into_bitboard()],
             combined_occupancy: Square::E1 | Square::E7 | Square::E8,
+            castle_rights: [CastleRights::NoSide; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn invalid_pawn_on_first_rank() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::H1 | Square::H8,
+                // Queen
+                Bitboard::EMPTY,
+                // Rook
+                Bitboard::EMPTY,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                Square::A1.into_bitboard(),
+            ],
+            color_occupancy: [Square::A1 | Square::H1, Square::H8.into_bitboard()],
+            combined_occupancy: Square::A1 | Square::H1 | Square::H8,
             castle_rights: [CastleRights::NoSide; 2],
             en_passant: None,
             half_move_clock: 0,
