@@ -231,9 +231,23 @@ impl ChessBoard {
             return false;
         }
 
-        // Have exactly one king of each color.
         for color in Color::iter() {
-            if self.occupancy(Piece::King, color).count() != 1 {
+            for piece in Piece::iter() {
+                // Check that we have the expected number of piecese.
+                let count = self.occupancy(piece, color).count();
+                let possible = match piece {
+                    Piece::King => count == 1,
+                    Piece::Pawn => count <= 8,
+                    Piece::Queen => count <= 9,
+                    _ => count <= 10,
+                };
+                if !possible {
+                    return false;
+                }
+            }
+
+            // Check that don't have too many pieces in total
+            if self.color_occupancy(color).count() > 16 {
                 return false;
             }
         }
@@ -757,6 +771,45 @@ mod test {
             ],
             color_occupancy: [Square::A1 | Square::H1, Square::H8.into_bitboard()],
             combined_occupancy: Square::A1 | Square::H1 | Square::H8,
+            castle_rights: [CastleRights::NoSide; 2],
+            en_passant: None,
+            half_move_clock: 0,
+            total_plies: 0,
+            side: Color::White,
+        };
+        assert!(!position.is_valid());
+    }
+
+    #[test]
+    fn invalid_too_many_pieces() {
+        let position = ChessBoard {
+            piece_occupancy: [
+                // King
+                Square::H1 | Square::H8,
+                // Queen
+                Bitboard::EMPTY,
+                // Rook
+                Bitboard::EMPTY,
+                // Bishop
+                Bitboard::EMPTY,
+                // Knight
+                Bitboard::EMPTY,
+                // Pawn
+                File::B.into_bitboard()
+                    | File::C.into_bitboard()
+                    | File::D.into_bitboard()
+                    | File::E.into_bitboard(),
+            ],
+            color_occupancy: [
+                File::B.into_bitboard() | File::C.into_bitboard() | Square::H1,
+                File::D.into_bitboard() | File::E.into_bitboard() | Square::H8,
+            ],
+            combined_occupancy: File::B.into_bitboard()
+                | File::C.into_bitboard()
+                | File::D.into_bitboard()
+                | File::E.into_bitboard()
+                | Square::H1
+                | Square::H8,
             castle_rights: [CastleRights::NoSide; 2],
             en_passant: None,
             half_move_clock: 0,
