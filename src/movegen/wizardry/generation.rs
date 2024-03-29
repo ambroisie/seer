@@ -1,8 +1,8 @@
 use crate::board::{Bitboard, Square};
 use crate::movegen::naive::{bishop_moves, rook_moves};
-use crate::movegen::Magic;
 
 use super::mask::{generate_bishop_mask, generate_rook_mask};
+use super::Magic;
 
 /// A trait to represent RNG for u64 values.
 #[allow(unused)] // FIXME: remove when used
