@@ -5,7 +5,7 @@ use crate::board::Bitboard;
 
 /// A type representing the magic board indexing a given [crate::board::Square].
 #[derive(Clone, Debug)]
-pub struct Magic {
+pub(crate) struct Magic {
     /// Magic number.
     pub(crate) magic: u64,
     /// Base offset into the magic square table.
