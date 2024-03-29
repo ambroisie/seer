@@ -4,6 +4,7 @@ mod mask;
 use crate::board::Bitboard;
 
 /// A type representing the magic board indexing a given [crate::board::Square].
+#[derive(Clone, Debug)]
 pub struct Magic {
     /// Magic number.
     pub(crate) magic: u64,
