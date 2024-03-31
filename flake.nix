@@ -66,6 +66,9 @@
           hooks = {
             clippy = {
               enable = true;
+              settings = {
+                denyWarnings = true;
+              };
             };
 
             nixpkgs-fmt = {
