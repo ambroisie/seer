@@ -59,6 +59,25 @@ class Color(enum.IntEnum):
         return self.name.title()
 
 
+class File(enum.IntEnum):
+    """
+    Python representation of a 'seer::board::file::File' raw value.
+    """
+
+    # Should be kept in sync with the enum in `file.rs`
+    A = 0
+    B = 1
+    C = 2
+    D = 3
+    E = 4
+    F = 5
+    G = 6
+    H = 7
+
+    def __str__(self):
+        return self.name.title()
+
+
 class SquarePrinter(object):
     "Print a seer::board::square::Square"
 
@@ -89,12 +108,23 @@ class ColorPrinter(object):
         return str(self._val)
 
 
+class FilePrinter(object):
+    "Print a seer::board::file::File"
+
+    def __init__(self, val):
+        self._val = File(int(val))
+
+    def to_string(self):
+        return str(self._val)
+
+
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter('seer')
 
     pp.add_printer('Square', '^seer::board::square::Square$', SquarePrinter)
     pp.add_printer('Bitboard', '^seer::board::bitboard::Bitboard$', BitboardPrinter)
     pp.add_printer('Color', '^seer::board::color::Color$', ColorPrinter)
+    pp.add_printer('File', '^seer::board::file::File$', FilePrinter)
 
     return pp
 
