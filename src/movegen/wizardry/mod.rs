@@ -1,20 +1,20 @@
 mod generation;
-pub(crate) use generation::*;
+pub(super) use generation::*;
 mod mask;
 
 use crate::board::{Bitboard, Square};
 
 /// A type representing the magic board indexing a given [crate::board::Square].
 #[derive(Clone, Debug)]
-pub(crate) struct Magic {
+pub(super) struct Magic {
     /// Magic number.
-    pub(crate) magic: u64,
+    pub(self) magic: u64,
     /// Base offset into the magic square table.
-    pub(crate) offset: usize,
+    pub(self) offset: usize,
     /// Mask to apply to the blocker board before applying the magic.
-    pub(crate) mask: Bitboard,
+    pub(self) mask: Bitboard,
     /// Length of the resulting mask after applying the magic.
-    pub(crate) shift: u8,
+    pub(self) shift: u8,
 }
 
 impl Magic {

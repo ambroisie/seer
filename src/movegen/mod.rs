@@ -1,8 +1,8 @@
 // Naive move generation
-pub mod naive;
+mod naive;
 
 // Magic bitboard generation
-pub(crate) mod wizardry;
+mod wizardry;
 
 // Magic bitboard definitions
 mod moves;
