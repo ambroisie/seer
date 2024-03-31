@@ -1,4 +1,5 @@
-pub(crate) mod generation;
+mod generation;
+pub(crate) use generation::*;
 mod mask;
 
 use crate::board::{Bitboard, Square};
