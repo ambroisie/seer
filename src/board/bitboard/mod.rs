@@ -91,7 +91,7 @@ impl IntoIterator for Bitboard {
     type Item = Square;
 
     fn into_iter(self) -> Self::IntoIter {
-        BitboardIterator(self.0)
+        BitboardIterator::new(self)
     }
 }
 
