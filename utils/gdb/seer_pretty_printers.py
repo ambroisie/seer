@@ -97,6 +97,23 @@ class Rank(enum.IntEnum):
         return self.name.title()
 
 
+class Piece(enum.IntEnum):
+    """
+    Python representation of a 'seer::board::piece::Piece' raw value.
+    """
+
+    # Should be kept in sync with the enum in `piece.rs`
+    KING = 0
+    QUEEN = 1
+    ROOK = 2
+    BISHOP = 3
+    KNIGHT = 4
+    PAWN = 5
+
+    def __str__(self):
+        return self.name.title()
+
+
 class SquarePrinter(object):
     "Print a seer::board::square::Square"
 
@@ -147,6 +164,16 @@ class RankPrinter(object):
         return str(self._val)
 
 
+class PiecePrinter(object):
+    "Print a seer::board::piece::Piece"
+
+    def __init__(self, val):
+        self._val = Piece(int(val))
+
+    def to_string(self):
+        return str(self._val)
+
+
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter('seer')
 
@@ -155,6 +182,7 @@ def build_pretty_printer():
     pp.add_printer('Color', '^seer::board::color::Color$', ColorPrinter)
     pp.add_printer('File', '^seer::board::file::File$', FilePrinter)
     pp.add_printer('Rank', '^seer::board::rank::Rank$', RankPrinter)
+    pp.add_printer('Piece', '^seer::board::piece::Piece$', ColorPrinter)
 
     return pp
 
