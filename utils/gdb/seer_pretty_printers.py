@@ -1,3 +1,5 @@
+import enum
+
 import gdb.printing
 
 
@@ -44,6 +46,19 @@ class Bitboard(object):
             n ^= b
 
 
+class Color(enum.IntEnum):
+    """
+    Python representation of a 'seer::board::color::Color' raw value.
+    """
+
+    # Should be kept in sync with the enum in `color.rs`
+    WHITE = 0
+    BLACK = 1
+
+    def __str__(self):
+        return self.name.title()
+
+
 class SquarePrinter(object):
     "Print a seer::board::square::Square"
 
@@ -64,11 +79,22 @@ class BitboardPrinter(object):
         return "Bitboard{" + str(self._val)[1:-1] + "}"
 
 
+class ColorPrinter(object):
+    "Print a seer::board::color::Color"
+
+    def __init__(self, val):
+        self._val = Color(int(val))
+
+    def to_string(self):
+        return str(self._val)
+
+
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter('seer')
 
     pp.add_printer('Square', '^seer::board::square::Square$', SquarePrinter)
     pp.add_printer('Bitboard', '^seer::board::bitboard::Bitboard$', BitboardPrinter)
+    pp.add_printer('Color', '^seer::board::color::Color$', ColorPrinter)
 
     return pp
 
