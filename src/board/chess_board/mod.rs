@@ -417,22 +417,33 @@ impl FromFen for ChessBoard {
         let half_move_clock = split.next().ok_or(FenError::InvalidFen)?;
         let full_move_counter = split.next().ok_or(FenError::InvalidFen)?;
 
+        let mut builder = ChessBoardBuilder::new();
+
         let castle_rights = <[CastleRights; 2]>::from_fen(castling_rights)?;
+        for color in Color::iter() {
+            builder.with_castle_rights(castle_rights[color.index()], color);
+        }
+
         let side = Color::from_fen(side_to_move)?;
-        let en_passant = Option::<Square>::from_fen(en_passant_square)?;
+        builder.with_current_player(side);
+
+        if let Some(square) = Option::<Square>::from_fen(en_passant_square)? {
+            builder.with_en_passant(square);
+        };
 
         let half_move_clock = half_move_clock
             .parse::<u8>()
             .map_err(|_| FenError::InvalidFen)?;
+        builder.with_half_move_clock(half_move_clock);
+
         let full_move_counter = full_move_counter
             .parse::<u32>()
             .map_err(|_| FenError::InvalidFen)?;
-        let total_plies = (full_move_counter - 1) * 2 + if side == Color::White { 0 } else { 1 };
+        builder.with_total_plies(
+            (full_move_counter - 1) * 2 + if side == Color::White { 0 } else { 1 },
+        );
 
-        let (piece_occupancy, color_occupancy, combined_occupancy) = {
-            let (mut pieces, mut colors, mut combined) =
-                ([Bitboard::EMPTY; 6], [Bitboard::EMPTY; 2], Bitboard::EMPTY);
-
+        {
             let mut rank: usize = 8;
             for rank_str in piece_placement.split('/') {
                 rank -= 1;
@@ -451,17 +462,15 @@ impl FromFen for ChessBoard {
                         }
                         _ => Piece::from_fen(&c.to_string())?,
                     };
-                    let (piece_board, color_board) =
-                        (&mut pieces[piece.index()], &mut colors[color.index()]);
 
                     // Only need to worry about underflow since those are `usize` values.
                     if file >= 8 || rank >= 8 {
                         return Err(FenError::InvalidFen);
                     };
+
                     let square = Square::new(File::from_index(file), Rank::from_index(rank));
-                    *piece_board |= square;
-                    *color_board |= square;
-                    combined |= square;
+
+                    builder[square] = Some((piece, color));
                     file += 1;
                 }
                 // We haven't read exactly 8 files.
@@ -473,26 +482,9 @@ impl FromFen for ChessBoard {
             if rank != 0 {
                 return Err(FenError::InvalidFen);
             }
-
-            (pieces, colors, combined)
         };
 
-        let res = Self {
-            piece_occupancy,
-            color_occupancy,
-            combined_occupancy,
-            castle_rights,
-            en_passant,
-            half_move_clock,
-            total_plies,
-            side,
-        };
-
-        if let Err(err) = res.validate() {
-            return Err(FenError::InvalidPosition(err));
-        }
-
-        Ok(res)
+        Ok(builder.try_into()?)
     }
 }
 
