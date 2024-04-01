@@ -5,6 +5,9 @@ use crate::{
 
 use super::{Bitboard, CastleRights, Color, File, Move, Piece, Rank, Square};
 
+mod error;
+pub use error::*;
+
 /// Represent an on-going chess game.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ChessBoard {
