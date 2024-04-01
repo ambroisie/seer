@@ -5,6 +5,9 @@ use crate::{
 
 use super::{Bitboard, CastleRights, Color, File, Move, Piece, Rank, Square};
 
+mod builder;
+pub use builder::*;
+
 mod error;
 pub use error::*;
 
