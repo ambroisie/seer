@@ -589,6 +589,56 @@ mod test {
     }
 
     #[test]
+    fn valid_en_passant() {
+        let mut builder = ChessBoardBuilder::new();
+        builder[Square::E1] = Some((Piece::King, Color::White));
+        builder[Square::E8] = Some((Piece::King, Color::Black));
+        builder[Square::A5] = Some((Piece::Pawn, Color::Black));
+        builder.with_en_passant(Square::A6);
+        TryInto::<ChessBoard>::try_into(builder).unwrap();
+    }
+
+    #[test]
+    fn invalid_en_passant_not_empty() {
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            builder[Square::A6] = Some((Piece::Rook, Color::Black));
+            builder[Square::A5] = Some((Piece::Pawn, Color::Black));
+            builder.with_en_passant(Square::A6);
+            TryInto::<ChessBoard>::try_into(builder)
+        };
+        assert_eq!(res.err().unwrap(), InvalidError::InvalidEnPassant);
+    }
+
+    #[test]
+    fn invalid_en_passant_not_behind_pawn() {
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            builder[Square::A5] = Some((Piece::Rook, Color::Black));
+            builder.with_en_passant(Square::A6);
+            TryInto::<ChessBoard>::try_into(builder)
+        };
+        assert_eq!(res.err().unwrap(), InvalidError::InvalidEnPassant);
+    }
+
+    #[test]
+    fn invalid_en_passant_incorrect_rank() {
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            builder[Square::A4] = Some((Piece::Pawn, Color::Black));
+            builder.with_en_passant(Square::A5);
+            TryInto::<ChessBoard>::try_into(builder)
+        };
+        assert_eq!(res.err().unwrap(), InvalidError::InvalidEnPassant);
+    }
+
+    #[test]
     fn invalid_kings_next_to_each_other() {
         let res = {
             let mut builder = ChessBoardBuilder::new();
