@@ -21,6 +21,8 @@ pub enum InvalidError {
     OverlappingColors,
     /// The pre-computed combined occupancy boards does not match the other boards.
     ErroneousCombinedOccupancy,
+    /// Half-move clock is higher than total number of plies.
+    HalfMoveClockTooHigh,
 }
 
 impl std::fmt::Display for InvalidError {
@@ -42,6 +44,7 @@ impl std::fmt::Display for InvalidError {
             Self::ErroneousCombinedOccupancy => {
                 "The pre-computed combined occupancy boards does not match the other boards."
             }
+            Self::HalfMoveClockTooHigh => "Half-move clock is higher than total number of plies.",
         };
         write!(f, "{}", error_msg)
     }

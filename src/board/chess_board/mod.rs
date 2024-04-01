@@ -208,6 +208,11 @@ impl ChessBoard {
 
     /// Validate the state of the board. Return Err([InvalidError]) if an issue is found.
     pub fn validate(&self) -> Result<(), InvalidError> {
+        // Make sure the clocks are in agreement.
+        if u32::from(self.half_move_clock()) > self.total_plies() {
+            return Err(InvalidError::HalfMoveClockTooHigh);
+        }
+
         // Don't overlap pieces.
         for piece in Piece::iter() {
             #[allow(clippy::collapsible_if)]
@@ -421,6 +426,18 @@ mod test {
     fn valid() {
         let default_position = ChessBoard::default();
         assert!(default_position.is_valid());
+    }
+
+    #[test]
+    fn invalid_half_moves_clock() {
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            builder.with_half_move_clock(10);
+            TryInto::<ChessBoard>::try_into(builder)
+        };
+        assert_eq!(res.err().unwrap(), InvalidError::HalfMoveClockTooHigh);
     }
 
     #[test]
