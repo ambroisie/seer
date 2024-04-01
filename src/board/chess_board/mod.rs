@@ -530,7 +530,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::OverlappingPieces,
+        );
     }
 
     #[test]
@@ -558,7 +561,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::OverlappingColors,
+        );
     }
 
     #[test]
@@ -586,7 +592,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::ErroneousCombinedOccupancy,
+        );
     }
 
     #[test]
@@ -614,7 +623,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::ErroneousCombinedOccupancy,
+        );
     }
 
     #[test]
@@ -642,7 +654,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::TooManyPieces,
+        );
     }
 
     #[test]
@@ -670,7 +685,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::InvalidCastlingRights,
+        );
     }
 
     #[test]
@@ -706,7 +724,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::InvalidCastlingRights,
+        );
     }
 
     #[test]
@@ -734,7 +755,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::NeighbouringKings,
+        );
     }
 
     #[test]
@@ -762,7 +786,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::OpponentInCheck,
+        );
     }
 
     #[test]
@@ -790,7 +817,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::InvalidPawnPosition,
+        );
     }
 
     #[test]
@@ -829,7 +859,10 @@ mod test {
             total_plies: 0,
             side: Color::White,
         };
-        assert!(!position.is_valid());
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::TooManyPieces,
+        );
     }
 
     #[test]
