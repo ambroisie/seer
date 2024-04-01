@@ -4,25 +4,35 @@ use crate::{
     board::{Bitboard, Color, File, Square},
     movegen::{
         naive,
-        wizardry::{generate_bishop_magics, generate_rook_magics, MagicMoves, RandGen},
+        wizardry::{
+            generate_bishop_magics, generate_rook_magics, MagicMoves, RandGen, BISHOP_SEED,
+            ROOK_SEED,
+        },
     },
 };
 
-// A simple XOR-shift RNG implementation.
-struct SimpleRng(u64);
+// A pre-rolled RNG for magic bitboard generation, using pre-determined values.
+struct PreRolledRng {
+    numbers: [u64; 64],
+    current_index: usize,
+}
 
-impl SimpleRng {
-    pub fn new() -> Self {
-        Self(4) // https://xkcd.com/221/
+impl PreRolledRng {
+    pub fn new(numbers: [u64; 64]) -> Self {
+        Self {
+            numbers,
+            current_index: 0,
+        }
     }
 }
 
-impl RandGen for SimpleRng {
+impl RandGen for PreRolledRng {
     fn gen(&mut self) -> u64 {
-        self.0 ^= self.0 >> 12;
-        self.0 ^= self.0 << 25;
-        self.0 ^= self.0 >> 27;
-        self.0
+        // We roll 3 numbers per square to bitwise-and them together.
+        // Just return the same one 3 times as a work-around.
+        let res = self.numbers[self.current_index / 3];
+        self.current_index += 1;
+        res
     }
 }
 
@@ -86,7 +96,7 @@ pub fn bishop_moves(square: Square, blockers: Bitboard) -> Bitboard {
     static BISHOP_MAGICS: OnceLock<MagicMoves> = OnceLock::new();
     BISHOP_MAGICS
         .get_or_init(|| {
-            let (magics, moves) = generate_bishop_magics(&mut SimpleRng::new());
+            let (magics, moves) = generate_bishop_magics(&mut PreRolledRng::new(BISHOP_SEED));
             // SAFETY: we used the generator function to compute these values
             unsafe { MagicMoves::new(magics, moves) }
         })
@@ -98,7 +108,7 @@ pub fn rook_moves(square: Square, blockers: Bitboard) -> Bitboard {
     static ROOK_MAGICS: OnceLock<MagicMoves> = OnceLock::new();
     ROOK_MAGICS
         .get_or_init(|| {
-            let (magics, moves) = generate_rook_magics(&mut SimpleRng::new());
+            let (magics, moves) = generate_rook_magics(&mut PreRolledRng::new(ROOK_SEED));
             // SAFETY: we used the generator function to compute these values
             unsafe { MagicMoves::new(magics, moves) }
         })
