@@ -27,6 +27,13 @@ impl std::fmt::Display for FenError {
 
 impl std::error::Error for FenError {}
 
+/// Allow converting a [InvalidError] into [FenError], for use with the '?' operator.
+impl From<InvalidError> for FenError {
+    fn from(err: InvalidError) -> Self {
+        Self::InvalidPosition(err)
+    }
+}
+
 /// Convert the castling rights segment of a FEN string to an array of [CastleRights].
 impl FromFen for [CastleRights; 2] {
     type Err = FenError;
