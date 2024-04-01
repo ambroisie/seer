@@ -61,6 +61,12 @@ impl ChessBoard {
         &mut self.castle_rights[color.index()]
     }
 
+    /// Get the [Bitboard] representing all pieces of the given [Piece] and [Color] type.
+    #[inline(always)]
+    pub fn occupancy(&self, piece: Piece, color: Color) -> Bitboard {
+        self.piece_occupancy(piece) & self.color_occupancy(color)
+    }
+
     /// Get the [Bitboard] representing all pieces of the given [Piece] type, discarding color.
     #[inline(always)]
     pub fn piece_occupancy(&self, piece: Piece) -> Bitboard {
