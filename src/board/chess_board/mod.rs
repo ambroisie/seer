@@ -485,8 +485,8 @@ impl FromFen for ChessBoard {
             side,
         };
 
-        if !res.is_valid() {
-            return Err(FenError::InvalidPosition);
+        if let Err(err) = res.validate() {
+            return Err(FenError::InvalidPosition(err));
         }
 
         Ok(res)
