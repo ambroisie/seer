@@ -46,6 +46,21 @@ class Bitboard(object):
             n ^= b
 
 
+class CastleRights(enum.IntEnum):
+    """
+    Python representation of a 'seer::board::castle_rights::CastleRights' raw value.
+    """
+
+    # Should be kept in sync with the enum in `color.rs`
+    NO_SIDE = 0
+    KING_SIDE = 1
+    QUEEN_SIDE = 2
+    BOTH_SIDES = 3
+
+    def __str__(self):
+        return self.name.title().replace("_", "")
+
+
 class Color(enum.IntEnum):
     """
     Python representation of a 'seer::board::color::Color' raw value.
@@ -217,6 +232,16 @@ class BitboardPrinter(object):
         return "Bitboard{" + str(self._val)[1:-1] + "}"
 
 
+class CastleRightsPrinter(object):
+    "Print a seer::board::castle_rights::CastleRights"
+
+    def __init__(self, val):
+        self._val = CastleRights(int(val))
+
+    def to_string(self):
+        return str(self._val)
+
+
 class ColorPrinter(object):
     "Print a seer::board::color::Color"
 
@@ -272,6 +297,7 @@ def build_pretty_printer():
 
     pp.add_printer('Square', '^seer::board::square::Square$', SquarePrinter)
     pp.add_printer('Bitboard', '^seer::board::bitboard::Bitboard$', BitboardPrinter)
+    pp.add_printer('CastleRights', '^seer::board::castle_rights::CastleRights$', CastleRightsPrinter)
     pp.add_printer('Color', '^seer::board::color::Color$', ColorPrinter)
     pp.add_printer('File', '^seer::board::file::File$', FilePrinter)
     pp.add_printer('Rank', '^seer::board::rank::Rank$', RankPrinter)
