@@ -9,8 +9,9 @@ pub struct ChessBoardBuilder {
     castle_rights: [CastleRights; Color::NUM_VARIANTS],
     en_passant: Option<Square>,
     half_move_clock: u8,
-    total_plies: u32,
     side: Color,
+    // 1-based, a turn is *two* half-moves (i.e: both players have played).
+    turn_count: u32,
 }
 
 impl ChessBoardBuilder {
@@ -20,8 +21,8 @@ impl ChessBoardBuilder {
             castle_rights: [CastleRights::NoSide; 2],
             en_passant: Default::default(),
             half_move_clock: Default::default(),
-            total_plies: Default::default(),
             side: Color::White,
+            turn_count: 1,
         }
     }
 
@@ -45,8 +46,8 @@ impl ChessBoardBuilder {
         self
     }
 
-    pub fn with_total_plies(&mut self, plies: u32) -> &mut Self {
-        self.total_plies = plies;
+    pub fn with_turn_count(&mut self, count: u32) -> &mut Self {
+        self.turn_count = count;
         self
     }
 
@@ -90,8 +91,8 @@ impl TryFrom<ChessBoardBuilder> for ChessBoard {
             castle_rights,
             en_passant,
             half_move_clock,
-            total_plies,
             side,
+            turn_count,
         } = builder;
 
         for square in Square::iter() {
@@ -102,6 +103,8 @@ impl TryFrom<ChessBoardBuilder> for ChessBoard {
             color_occupancy[color.index()] |= square;
             combined_occupancy |= square;
         }
+
+        let total_plies = (turn_count - 1) * 2 + if side == Color::White { 0 } else { 1 };
 
         let board = ChessBoard {
             piece_occupancy,
@@ -146,7 +149,7 @@ mod test {
 
         builder
             .with_half_move_clock(board.half_move_clock())
-            .with_total_plies(board.total_plies())
+            .with_turn_count(board.total_plies() / 2 + 1)
             .with_current_player(board.current_player());
 
         builder

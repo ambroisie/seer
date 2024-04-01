@@ -154,9 +154,7 @@ impl FromFen for ChessBoard {
         let full_move_counter = full_move_counter
             .parse::<u32>()
             .map_err(|_| FenError::InvalidFen)?;
-        builder.with_total_plies(
-            (full_move_counter - 1) * 2 + if side == Color::White { 0 } else { 1 },
-        );
+        builder.with_turn_count(full_move_counter);
 
         {
             let mut rank: usize = 8;
