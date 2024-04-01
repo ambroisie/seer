@@ -696,8 +696,8 @@ mod test {
             ],
             combined_occupancy: Square::A1
                 | Square::A8
-                | Square::E1
-                | Square::E8
+                | Square::E2
+                | Square::E7
                 | Square::H1
                 | Square::H8,
             castle_rights: [CastleRights::BothSides; 2],
