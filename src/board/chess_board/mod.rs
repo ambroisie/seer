@@ -24,7 +24,7 @@ pub struct ChessBoard {
     /// `Some(target_square)` if a double-step move was made.
     en_passant: Option<Square>,
     /// The number of half-turns without either a pawn push or capture.
-    half_move_clock: u8, // Should never go higher than 50.
+    half_move_clock: u32, // Should *probably* never go higher than 100.
     /// The number of half-turns so far.
     total_plies: u32, // Should be plenty.
     /// The current player turn.
@@ -36,7 +36,7 @@ pub struct ChessBoard {
 pub struct NonReversibleState {
     castle_rights: [CastleRights; Color::NUM_VARIANTS],
     en_passant: Option<Square>,
-    half_move_clock: u8, // Should never go higher than 50.
+    half_move_clock: u32, // Should *probably* never go higher than 100.
 }
 
 impl ChessBoard {
@@ -105,7 +105,7 @@ impl ChessBoard {
 
     /// Return the number of half-turns without either a pawn push or a capture.
     #[inline(always)]
-    pub fn half_move_clock(&self) -> u8 {
+    pub fn half_move_clock(&self) -> u32 {
         self.half_move_clock
     }
 
@@ -214,7 +214,7 @@ impl ChessBoard {
         }
 
         // Make sure the clocks are in agreement.
-        if u32::from(self.half_move_clock()) > self.total_plies() {
+        if self.half_move_clock() > self.total_plies() {
             return Err(InvalidError::HalfMoveClockTooHigh);
         }
 

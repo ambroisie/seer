@@ -8,7 +8,7 @@ pub struct ChessBoardBuilder {
     // Same fields as [ChessBoard].
     castle_rights: [CastleRights; Color::NUM_VARIANTS],
     en_passant: Option<Square>,
-    half_move_clock: u8,
+    half_move_clock: u32,
     side: Color,
     // 1-based, a turn is *two* half-moves (i.e: both players have played).
     turn_count: u32,
@@ -41,7 +41,7 @@ impl ChessBoardBuilder {
         self
     }
 
-    pub fn with_half_move_clock(&mut self, clock: u8) -> &mut Self {
+    pub fn with_half_move_clock(&mut self, clock: u32) -> &mut Self {
         self.half_move_clock = clock;
         self
     }
