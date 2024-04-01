@@ -634,238 +634,95 @@ mod test {
 
     #[test]
     fn invalid_multiple_kings() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E2 | Square::E7 | Square::E8,
-                // Queen
-                Bitboard::EMPTY,
-                // Rook
-                Bitboard::EMPTY,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                Bitboard::EMPTY,
-            ],
-            color_occupancy: [Square::E1 | Square::E2, Square::E7 | Square::E8],
-            combined_occupancy: Square::E1 | Square::E2 | Square::E7 | Square::E8,
-            castle_rights: [CastleRights::NoSide; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E2] = Some((Piece::King, Color::White));
+            builder[Square::E7] = Some((Piece::King, Color::Black));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(
-            position.validate().err().unwrap(),
-            InvalidError::TooManyPieces,
-        );
+        assert_eq!(res.err().unwrap(), InvalidError::TooManyPieces);
     }
 
     #[test]
     fn invalid_castling_rights_no_rooks() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Bitboard::EMPTY,
-                // Rook
-                Bitboard::EMPTY,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                Bitboard::EMPTY,
-            ],
-            color_occupancy: [Square::E1.into_bitboard(), Square::E8.into_bitboard()],
-            combined_occupancy: Square::E1 | Square::E8,
-            castle_rights: [CastleRights::BothSides; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            builder.with_castle_rights(CastleRights::BothSides, Color::White);
+            TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(
-            position.validate().err().unwrap(),
-            InvalidError::InvalidCastlingRights,
-        );
+        assert_eq!(res.err().unwrap(), InvalidError::InvalidCastlingRights);
     }
 
     #[test]
     fn invalid_castling_rights_moved_king() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E2 | Square::E7,
-                // Queen
-                Bitboard::EMPTY,
-                // Rook
-                Square::A1 | Square::A8 | Square::H1 | Square::H8,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                Bitboard::EMPTY,
-            ],
-            color_occupancy: [
-                Square::A1 | Square::E2 | Square::H1,
-                Square::A8 | Square::E7 | Square::H8,
-            ],
-            combined_occupancy: Square::A1
-                | Square::A8
-                | Square::E2
-                | Square::E7
-                | Square::H1
-                | Square::H8,
-            castle_rights: [CastleRights::BothSides; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E2] = Some((Piece::King, Color::White));
+            builder[Square::A1] = Some((Piece::Rook, Color::White));
+            builder[Square::H1] = Some((Piece::Rook, Color::White));
+            builder[Square::E7] = Some((Piece::King, Color::Black));
+            builder[Square::A8] = Some((Piece::Rook, Color::Black));
+            builder[Square::H8] = Some((Piece::Rook, Color::Black));
+            builder.with_castle_rights(CastleRights::BothSides, Color::White);
+            TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(
-            position.validate().err().unwrap(),
-            InvalidError::InvalidCastlingRights,
-        );
+        assert_eq!(res.err().unwrap(), InvalidError::InvalidCastlingRights);
     }
 
     #[test]
     fn invalid_kings_next_to_each_other() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E2 | Square::E3,
-                // Queen
-                Bitboard::EMPTY,
-                // Rook
-                Bitboard::EMPTY,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                Bitboard::EMPTY,
-            ],
-            color_occupancy: [Square::E2.into_bitboard(), Square::E3.into_bitboard()],
-            combined_occupancy: Square::E2 | Square::E3,
-            castle_rights: [CastleRights::NoSide; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E2] = Some((Piece::King, Color::Black));
+            TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(
-            position.validate().err().unwrap(),
-            InvalidError::NeighbouringKings,
-        );
+        assert_eq!(res.err().unwrap(), InvalidError::NeighbouringKings);
     }
 
     #[test]
     fn invalid_opponent_in_check() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Square::E7.into_bitboard(),
-                // Rook
-                Bitboard::EMPTY,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                Bitboard::EMPTY,
-            ],
-            color_occupancy: [Square::E1 | Square::E7, Square::E8.into_bitboard()],
-            combined_occupancy: Square::E1 | Square::E7 | Square::E8,
-            castle_rights: [CastleRights::NoSide; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E7] = Some((Piece::Queen, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(
-            position.validate().err().unwrap(),
-            InvalidError::OpponentInCheck,
-        );
+        assert_eq!(res.err().unwrap(), InvalidError::OpponentInCheck);
     }
 
     #[test]
     fn invalid_pawn_on_first_rank() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::H1 | Square::H8,
-                // Queen
-                Bitboard::EMPTY,
-                // Rook
-                Bitboard::EMPTY,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                Square::A1.into_bitboard(),
-            ],
-            color_occupancy: [Square::A1 | Square::H1, Square::H8.into_bitboard()],
-            combined_occupancy: Square::A1 | Square::H1 | Square::H8,
-            castle_rights: [CastleRights::NoSide; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::H1] = Some((Piece::King, Color::White));
+            builder[Square::A1] = Some((Piece::Pawn, Color::White));
+            builder[Square::H8] = Some((Piece::King, Color::Black));
+            TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(
-            position.validate().err().unwrap(),
-            InvalidError::InvalidPawnPosition,
-        );
+        assert_eq!(res.err().unwrap(), InvalidError::InvalidPawnPosition);
     }
 
     #[test]
     fn invalid_too_many_pieces() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::H1 | Square::H8,
-                // Queen
-                Bitboard::EMPTY,
-                // Rook
-                Bitboard::EMPTY,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                File::B.into_bitboard()
-                    | File::C.into_bitboard()
-                    | File::D.into_bitboard()
-                    | File::E.into_bitboard(),
-            ],
-            color_occupancy: [
-                File::B.into_bitboard() | File::C.into_bitboard() | Square::H1,
-                File::D.into_bitboard() | File::E.into_bitboard() | Square::H8,
-            ],
-            combined_occupancy: File::B.into_bitboard()
-                | File::C.into_bitboard()
-                | File::D.into_bitboard()
-                | File::E.into_bitboard()
-                | Square::H1
-                | Square::H8,
-            castle_rights: [CastleRights::NoSide; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let res = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::H1] = Some((Piece::King, Color::White));
+            builder[Square::H8] = Some((Piece::King, Color::Black));
+            for square in (File::B.into_bitboard() | File::C.into_bitboard()).into_iter() {
+                builder[square] = Some((Piece::Pawn, Color::White));
+            }
+            for square in (File::F.into_bitboard() | File::G.into_bitboard()).into_iter() {
+                builder[square] = Some((Piece::Pawn, Color::Black));
+            }
+            TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(
-            position.validate().err().unwrap(),
-            InvalidError::TooManyPieces,
-        );
+        assert_eq!(res.err().unwrap(), InvalidError::TooManyPieces);
     }
 
     #[test]
