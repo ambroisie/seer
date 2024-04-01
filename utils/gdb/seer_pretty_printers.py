@@ -14,6 +14,10 @@ class Square(object):
     def __init__(self, val):
         self._val = val
 
+    @classmethod
+    def from_file_rank(cls, file, rank):
+        return cls(file * 8 + rank)
+
     def __str__(self):
         return self.FILES[self.file] + self.RANKS[self.rank]
 
