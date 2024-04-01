@@ -9,7 +9,7 @@ pub enum InvalidError {
     InvalidPawnPosition,
     /// Castling rights do not match up with the state of the board.
     InvalidCastlingRights,
-    /// En-passant target square is not empty and behind an opponent's pawn.
+    /// En-passant target square is not empty, behind an opponent's pawn, on the correct rank.
     InvalidEnPassant,
     /// The two kings are next to each other.
     NeighbouringKings,
@@ -33,7 +33,7 @@ impl std::fmt::Display for InvalidError {
                 "Castling rights do not match up with the state of the board."
             }
             Self::InvalidEnPassant => {
-                "En-passant target square is not empty and behind an opponent's pawn."
+                "En-passant target square is not empty, behind an opponent's pawn, on the correct rank."
             }
             Self::NeighbouringKings => "The two kings are next to each other.",
             Self::OpponentInCheck => "The opponent is currently in check.",

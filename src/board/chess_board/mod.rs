@@ -297,12 +297,22 @@ impl ChessBoard {
             }
         }
 
-        // The current en-passant target square must be empty, right behind an opponent's pawn.
+        // En-passant validation
         if let Some(square) = self.en_passant() {
+            // Must be empty
             if !(self.combined_occupancy() & square).is_empty() {
                 return Err(InvalidError::InvalidEnPassant);
             }
-            let opponent_pawns = self.occupancy(Piece::Pawn, !self.current_player());
+
+            let opponent = !self.current_player();
+
+            // Must be on the opponent's third rank
+            if (square & opponent.third_rank().into_bitboard()).is_empty() {
+                return Err(InvalidError::InvalidEnPassant);
+            }
+
+            // Must be behind a pawn
+            let opponent_pawns = self.occupancy(Piece::Pawn, opponent);
             let double_pushed_pawn = self
                 .current_player()
                 .backward_direction()
