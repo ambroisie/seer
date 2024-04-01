@@ -139,20 +139,19 @@ impl FromFen for ChessBoard {
             builder.with_castle_rights(castle_rights[color.index()], color);
         }
 
-        let side = Color::from_fen(side_to_move)?;
-        builder.with_current_player(side);
+        builder.with_current_player(FromFen::from_fen(side_to_move)?);
 
-        if let Some(square) = Option::<Square>::from_fen(en_passant_square)? {
+        if let Some(square) = FromFen::from_fen(en_passant_square)? {
             builder.with_en_passant(square);
         };
 
         let half_move_clock = half_move_clock
-            .parse::<u8>()
+            .parse::<_>()
             .map_err(|_| FenError::InvalidFen)?;
         builder.with_half_move_clock(half_move_clock);
 
         let full_move_counter = full_move_counter
-            .parse::<u32>()
+            .parse::<_>()
             .map_err(|_| FenError::InvalidFen)?;
         builder.with_turn_count(full_move_counter);
 
@@ -173,7 +172,7 @@ impl FromFen for ChessBoard {
                             file += digit.to_digit(10).unwrap() as usize;
                             continue;
                         }
-                        _ => Piece::from_fen(&c.to_string())?,
+                        _ => FromFen::from_fen(&c.to_string())?,
                     };
 
                     // Only need to worry about underflow since those are `usize` values.
