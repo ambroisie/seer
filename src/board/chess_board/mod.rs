@@ -203,13 +203,18 @@ impl ChessBoard {
     /// Return true if the current state of the board looks valid, false if something is definitely
     /// wrong.
     pub fn is_valid(&self) -> bool {
+        self.validate().is_ok()
+    }
+
+    /// Validate the state of the board. Return Err([InvalidError]) if an issue is found.
+    pub fn validate(&self) -> Result<(), InvalidError> {
         // Don't overlap pieces.
         for piece in Piece::iter() {
             #[allow(clippy::collapsible_if)]
             for other in Piece::iter() {
                 if piece != other {
                     if !(self.piece_occupancy(piece) & self.piece_occupancy(other)).is_empty() {
-                        return false;
+                        return Err(InvalidError::OverlappingPieces);
                     }
                 }
             }
@@ -217,7 +222,7 @@ impl ChessBoard {
 
         // Don't overlap colors.
         if !(self.color_occupancy(Color::White) & self.color_occupancy(Color::Black)).is_empty() {
-            return false;
+            return Err(InvalidError::OverlappingColors);
         }
 
         // Calculate the union of all pieces.
@@ -226,12 +231,12 @@ impl ChessBoard {
 
         // Ensure that the pre-computed version is accurate.
         if combined != self.combined_occupancy() {
-            return false;
+            return Err(InvalidError::ErroneousCombinedOccupancy);
         }
 
         // Ensure that all pieces belong to a color, and no color has pieces that don't exist.
         if combined != (self.color_occupancy(Color::White) | self.color_occupancy(Color::Black)) {
-            return false;
+            return Err(InvalidError::ErroneousCombinedOccupancy);
         }
 
         for color in Color::iter() {
@@ -239,19 +244,24 @@ impl ChessBoard {
                 // Check that we have the expected number of piecese.
                 let count = self.occupancy(piece, color).count();
                 let possible = match piece {
-                    Piece::King => count == 1,
+                    Piece::King => count <= 1,
                     Piece::Pawn => count <= 8,
                     Piece::Queen => count <= 9,
                     _ => count <= 10,
                 };
                 if !possible {
-                    return false;
+                    return Err(InvalidError::TooManyPieces);
                 }
+            }
+
+            // Check that we have a king
+            if self.occupancy(Piece::King, color).count() != 1 {
+                return Err(InvalidError::MissingKing);
             }
 
             // Check that don't have too many pieces in total
             if self.color_occupancy(color).count() > 16 {
-                return false;
+                return Err(InvalidError::TooManyPieces);
             }
         }
 
@@ -260,7 +270,7 @@ impl ChessBoard {
             & (Rank::First.into_bitboard() | Rank::Eighth.into_bitboard()))
         .is_empty()
         {
-            return false;
+            return Err(InvalidError::InvalidPawnPosition);
         }
 
         // Verify that rooks and kings that are allowed to castle have not been moved.
@@ -276,21 +286,21 @@ impl ChessBoard {
             let expected_rooks = castle_rights.unmoved_rooks(color);
             // We must check the intersection, in case there are more than 2 rooks on the board.
             if (expected_rooks & actual_rooks) != expected_rooks {
-                return false;
+                return Err(InvalidError::InvalidCastlingRights);
             }
 
             let actual_king = self.occupancy(Piece::King, color);
             let expected_king = Square::new(File::E, color.first_rank());
             // We have checked that there is exactly one king, no need for intersecting the sets.
             if actual_king != expected_king.into_bitboard() {
-                return false;
+                return Err(InvalidError::InvalidCastlingRights);
             }
         }
 
         // The current en-passant target square must be empty, right behind an opponent's pawn.
         if let Some(square) = self.en_passant() {
             if !(self.combined_occupancy() & square).is_empty() {
-                return false;
+                return Err(InvalidError::InvalidEnPassant);
             }
             let opponent_pawns = self.occupancy(Piece::Pawn, !self.current_player());
             let double_pushed_pawn = self
@@ -298,7 +308,7 @@ impl ChessBoard {
                 .backward_direction()
                 .move_board(square.into_bitboard());
             if (opponent_pawns & double_pushed_pawn).is_empty() {
-                return false;
+                return Err(InvalidError::InvalidEnPassant);
             }
         }
 
@@ -307,15 +317,15 @@ impl ChessBoard {
         let black_king = self.occupancy(Piece::King, Color::Black);
         // Unwrap is fine, we already checked that there is exactly one king of each color
         if !(movegen::king_moves(white_king.try_into().unwrap()) & black_king).is_empty() {
-            return false;
+            return Err(InvalidError::NeighbouringKings);
         }
 
         // Check that the opponent is not currently in check.
         if !self.compute_checkers(!self.current_player()).is_empty() {
-            return false;
+            return Err(InvalidError::OpponentInCheck);
         }
 
-        true
+        Ok(())
     }
 
     /// Compute all pieces that are currently threatening the given [Color]'s king.
