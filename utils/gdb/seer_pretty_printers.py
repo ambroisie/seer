@@ -1,5 +1,6 @@
 import enum
 
+import gdb
 import gdb.printing
 
 
@@ -219,6 +220,82 @@ class Move(object):
         return "Move{\n" + "".join(map(indent, values)) + "}"
 
 
+class ChessBoard(object):
+    """
+    Wrapper around GDB's representation of a 'seer::board::chess_board::ChessBoard'
+    in memory.
+    """
+
+    def __init__(
+        self,
+        piece_occupancy,
+        color_occupancy,
+        castle_rights,
+        half_move_clock,
+        total_plies,
+        side,
+    ):
+        self._piece_occupancy = list(map(Bitboard, piece_occupancy))
+        self._color_occupancy = list(map(Bitboard, color_occupancy))
+        self._castle_rights = list(map(CastleRights, castle_rights))
+        self._half_move_clock = int(half_move_clock)
+        self._total_plies = int(total_plies)
+        self._side = Color(side)
+
+    @classmethod
+    def from_gdb(cls, val):
+        return cls(
+            [int(val["piece_occupancy"][p]["__0"]) for p in Piece],
+            [int(val["color_occupancy"][c]["__0"]) for c in Color],
+            [int(val["castle_rights"][c]) for c in Color],
+            # FIXME: find out how to check for Some/None in val["en_passant"],
+            int(val["half_move_clock"]),
+            int(val["total_plies"]),
+            Color(int(val["side"])),
+        )
+
+    def at(self, square):
+        for piece in Piece:
+            if not self._piece_occupancy[piece].at(square):
+                continue
+            for color in Color:
+                if not self._color_occupancy[color].at(square):
+                    continue
+                return (piece, color)
+        return None
+
+    def pretty_str(self):
+        def pretty_piece(piece, color):
+            return [
+                ("♚", "♔"),
+                ("♛", "♕"),
+                ("♜", "♖"),
+                ("♝", "♗"),
+                ("♞", "♘"),
+                ("♟", "♙"),
+            ][piece][color]
+
+        board = [
+            [self.at(Square.from_file_rank(file, rank)) for file in File]
+            for rank in Rank
+        ]
+
+        res = []
+        res.append("   A B C D E F G H   ")
+        for n, line in reversed(list(enumerate(board, start=1))):
+            strings = [str(n) + " "]
+            strings.extend(" " if p is None else pretty_piece(*p) for p in line)
+            strings.append(" " + str(n))
+            res.append("|".join(strings))
+        res.append("   A B C D E F G H   ")
+        res += [
+            "Half-move clock: " + str(self._half_move_clock),
+            "Total plies: " + str(self._total_plies),
+            "Side to play: " + str(self._side),
+        ]
+        return "\n".join(res)
+
+
 class SquarePrinter(object):
     "Print a seer::board::square::Square"
 
@@ -299,6 +376,21 @@ class MovePrinter(object):
         return str(self._val)
 
 
+class PrintBoard(gdb.Command):
+    """
+    Pretty-print a 'seer::board::chess_board::ChessBoard' as a 2D textual chess board.
+    """
+
+    def __init__(self):
+        super(PrintBoard, self).__init__(
+            "print-board", gdb.COMMAND_USER, gdb.COMPLETE_EXPRESSION
+        )
+
+    def invoke(self, arg, from_tty):
+        board = ChessBoard.from_gdb(gdb.parse_and_eval(arg))
+        print(board.pretty_str())
+
+
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter('seer')
 
@@ -313,4 +405,10 @@ def build_pretty_printer():
 
     return pp
 
+
+def register_commands():
+    PrintBoard()
+
+
 gdb.printing.register_pretty_printer(gdb.current_objfile(), build_pretty_printer(), True)
+register_commands()
