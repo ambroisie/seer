@@ -208,6 +208,11 @@ impl ChessBoard {
 
     /// Validate the state of the board. Return Err([InvalidError]) if an issue is found.
     pub fn validate(&self) -> Result<(), InvalidError> {
+        // The current plie count should be odd on white's turn, and vice-versa.
+        if self.total_plies() % 2 != self.current_player().index() as u32 {
+            return Err(InvalidError::IncoherentPlieCount);
+        }
+
         // Make sure the clocks are in agreement.
         if u32::from(self.half_move_clock()) > self.total_plies() {
             return Err(InvalidError::HalfMoveClockTooHigh);
@@ -426,6 +431,22 @@ mod test {
     fn valid() {
         let default_position = ChessBoard::default();
         assert!(default_position.is_valid());
+    }
+
+    #[test]
+    fn invalid_incoherent_plie_count() {
+        let position = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            let mut board = TryInto::<ChessBoard>::try_into(builder).unwrap();
+            board.total_plies = 1;
+            board
+        };
+        assert_eq!(
+            position.validate().err().unwrap(),
+            InvalidError::IncoherentPlieCount,
+        );
     }
 
     #[test]

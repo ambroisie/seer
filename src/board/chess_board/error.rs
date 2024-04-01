@@ -23,6 +23,8 @@ pub enum InvalidError {
     ErroneousCombinedOccupancy,
     /// Half-move clock is higher than total number of plies.
     HalfMoveClockTooHigh,
+    /// The total plie count does not match the current player.
+    IncoherentPlieCount,
 }
 
 impl std::fmt::Display for InvalidError {
@@ -45,6 +47,7 @@ impl std::fmt::Display for InvalidError {
                 "The pre-computed combined occupancy boards does not match the other boards."
             }
             Self::HalfMoveClockTooHigh => "Half-move clock is higher than total number of plies.",
+            Self::IncoherentPlieCount => "The total plie count does not match the current player.",
         };
         write!(f, "{}", error_msg)
     }
