@@ -41,6 +41,9 @@ class Bitboard(object):
     def __str__(self):
         return "[" + ", ".join(map(str, self.squares)) + "]"
 
+    def at(self, square):
+        return bool(self._val & (1 << square._val))
+
     @property
     def squares(self):
         n = self._val
