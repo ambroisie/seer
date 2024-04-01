@@ -226,7 +226,7 @@ impl ChessBoard {
 
         // Have exactly one king of each color.
         for color in Color::iter() {
-            if (self.piece_occupancy(Piece::King) & self.color_occupancy(color)).count() != 1 {
+            if self.occupancy(Piece::King, color).count() != 1 {
                 return false;
             }
         }
@@ -240,14 +240,14 @@ impl ChessBoard {
                 continue;
             }
 
-            let actual_rooks = self.piece_occupancy(Piece::Rook) & self.color_occupancy(color);
+            let actual_rooks = self.occupancy(Piece::Rook, color);
             let expected_rooks = castle_rights.unmoved_rooks(color);
             // We must check the intersection, in case there are more than 2 rooks on the board.
             if (expected_rooks & actual_rooks) != expected_rooks {
                 return false;
             }
 
-            let actual_king = self.piece_occupancy(Piece::King) & self.color_occupancy(color);
+            let actual_king = self.occupancy(Piece::King, color);
             let expected_king = Square::new(File::E, color.first_rank());
             // We have checked that there is exactly one king, no need for intersecting the sets.
             if actual_king != expected_king.into_bitboard() {
@@ -260,8 +260,7 @@ impl ChessBoard {
             if !(self.combined_occupancy() & square).is_empty() {
                 return false;
             }
-            let opponent_pawns =
-                self.piece_occupancy(Piece::Pawn) & self.color_occupancy(!self.current_player());
+            let opponent_pawns = self.occupancy(Piece::Pawn, !self.current_player());
             let double_pushed_pawn = self
                 .current_player()
                 .backward_direction()
@@ -272,8 +271,8 @@ impl ChessBoard {
         }
 
         // Check that kings don't touch each other.
-        let white_king = self.piece_occupancy(Piece::King) & self.color_occupancy(Color::White);
-        let black_king = self.piece_occupancy(Piece::King) & self.color_occupancy(Color::Black);
+        let white_king = self.occupancy(Piece::King, Color::White);
+        let black_king = self.occupancy(Piece::King, Color::Black);
         // Unwrap is fine, we already checked that there is exactly one king of each color
         if !(movegen::king_moves(white_king.try_into().unwrap()) & black_king).is_empty() {
             return false;
