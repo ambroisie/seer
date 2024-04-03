@@ -4,6 +4,17 @@ import gdb
 import gdb.printing
 
 
+def optional(constructor, val):
+    try:
+        return constructor(val["Some"]["__0"])
+    except gdb.error:
+        return None
+
+
+def print_opt(val):
+    return "(None)" if val is None else str(val)
+
+
 class Square(object):
     """
     Python representation of a 'seer::board::square::Square' raw value.
@@ -217,7 +228,6 @@ class Move(object):
             "double_step",
             "castling",
         ]
-        print_opt = lambda val: "(None)" if val is None else str(val)
         indent = lambda s: "    " + s
 
         values = [key + ": " + print_opt(getattr(self, key)) + ",\n" for key in KEYS]
@@ -238,6 +248,7 @@ class ChessBoard(object):
         half_move_clock,
         total_plies,
         side,
+        en_passant,
     ):
         self._piece_occupancy = list(map(Bitboard, piece_occupancy))
         self._color_occupancy = list(map(Bitboard, color_occupancy))
@@ -245,6 +256,7 @@ class ChessBoard(object):
         self._half_move_clock = int(half_move_clock)
         self._total_plies = int(total_plies)
         self._side = Color(side)
+        self._en_passant = None if en_passant is None else Square(en_passant)
 
     @classmethod
     def from_gdb(cls, val):
@@ -252,10 +264,10 @@ class ChessBoard(object):
             [int(val["piece_occupancy"][p]["__0"]) for p in Piece],
             [int(val["color_occupancy"][c]["__0"]) for c in Color],
             [int(val["castle_rights"][c]) for c in Color],
-            # FIXME: find out how to check for Some/None in val["en_passant"],
             int(val["half_move_clock"]),
             int(val["total_plies"]),
             Color(int(val["side"])),
+            optional(int, val["en_passant"]),
         )
 
     def at(self, square):
@@ -296,6 +308,7 @@ class ChessBoard(object):
             "Half-move clock: " + str(self._half_move_clock),
             "Total plies: " + str(self._total_plies),
             "Side to play: " + str(self._side),
+            "En passant: " + print_opt(self._en_passant),
         ]
         return "\n".join(res)
 
