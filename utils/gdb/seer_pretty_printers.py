@@ -29,6 +29,10 @@ class Square(object):
         self._val = val
 
     @classmethod
+    def from_gdb(cls, val):
+        return cls(int(val))
+
+    @classmethod
     def from_file_rank(cls, file, rank):
         return cls(file * 8 + rank)
 
@@ -53,6 +57,10 @@ class Bitboard(object):
         if isinstance(val, Bitboard):
             val = val._val
         self._val = val
+
+    @classmethod
+    def from_gdb(cls, val):
+        return cls(int(val["__0"]))
 
     def __str__(self):
         return "[" + ", ".join(map(str, self.squares)) + "]"
@@ -80,6 +88,10 @@ class CastleRights(enum.IntEnum):
     QUEEN_SIDE = 2
     BOTH_SIDES = 3
 
+    @classmethod
+    def from_gdb(cls, val):
+        return cls(int(val))
+
     def __str__(self):
         return self.name.title().replace("_", "")
 
@@ -92,6 +104,10 @@ class Color(enum.IntEnum):
     # Should be kept in sync with the enum in `color.rs`
     WHITE = 0
     BLACK = 1
+
+    @classmethod
+    def from_gdb(cls, val):
+        return cls(int(val))
 
     def __str__(self):
         return self.name.title()
@@ -112,6 +128,10 @@ class File(enum.IntEnum):
     G = 6
     H = 7
 
+    @classmethod
+    def from_gdb(cls, val):
+        return cls(int(val))
+
     def __str__(self):
         return self.name.title()
 
@@ -131,6 +151,10 @@ class Rank(enum.IntEnum):
     Seventh = 6
     Eighth = 7
 
+    @classmethod
+    def from_gdb(cls, val):
+        return cls(int(val))
+
     def __str__(self):
         return self.name.title()
 
@@ -147,6 +171,10 @@ class Piece(enum.IntEnum):
     BISHOP = 3
     KNIGHT = 4
     PAWN = 5
+
+    @classmethod
+    def from_gdb(cls, val):
+        return cls(int(val))
 
     def __str__(self):
         return self.name.title()
@@ -178,6 +206,10 @@ class Move(object):
 
     def __init__(self, val):
         self._val = val
+
+    @classmethod
+    def from_gdb(cls, val):
+        return cls(int(val))
 
     @property
     def piece(self):
