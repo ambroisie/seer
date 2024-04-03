@@ -1,4 +1,4 @@
-use crate::board::{Bitboard, CastleRights, ChessBoard, Color, InvalidError, Piece, Square};
+use crate::board::{Bitboard, CastleRights, ChessBoard, Color, Piece, Square, ValidationError};
 
 /// Build a [ChessBoard] one piece at a time.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -80,7 +80,7 @@ impl std::ops::IndexMut<Square> for ChessBoardBuilder {
 }
 
 impl TryFrom<ChessBoardBuilder> for ChessBoard {
-    type Error = InvalidError;
+    type Error = ValidationError;
 
     fn try_from(builder: ChessBoardBuilder) -> Result<Self, Self::Error> {
         let mut piece_occupancy: [Bitboard; Piece::NUM_VARIANTS] = Default::default();

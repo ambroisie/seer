@@ -1,5 +1,5 @@
 use crate::board::{
-    CastleRights, ChessBoard, ChessBoardBuilder, Color, File, InvalidError, Piece, Rank, Square,
+    CastleRights, ChessBoard, ChessBoardBuilder, Color, File, Piece, Rank, Square, ValidationError,
 };
 
 /// A trait to mark items that can be converted from a FEN input.
@@ -15,7 +15,7 @@ pub enum FenError {
     /// Invalid FEN input.
     InvalidFen,
     /// Invalid chess position.
-    InvalidPosition(InvalidError),
+    InvalidPosition(ValidationError),
 }
 
 impl std::fmt::Display for FenError {
@@ -29,9 +29,9 @@ impl std::fmt::Display for FenError {
 
 impl std::error::Error for FenError {}
 
-/// Allow converting a [InvalidError] into [FenError], for use with the '?' operator.
-impl From<InvalidError> for FenError {
-    fn from(err: InvalidError) -> Self {
+/// Allow converting a [ValidationError] into [FenError], for use with the '?' operator.
+impl From<ValidationError> for FenError {
+    fn from(err: ValidationError) -> Self {
         Self::InvalidPosition(err)
     }
 }

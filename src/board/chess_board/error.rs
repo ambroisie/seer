@@ -1,6 +1,6 @@
 /// A singular type for all errors that could happen during [ChessBoard::is_valid].
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum InvalidError {
+pub enum ValidationError {
     /// Too many pieces.
     TooManyPieces,
     /// Missing king.
@@ -27,7 +27,7 @@ pub enum InvalidError {
     IncoherentPlieCount,
 }
 
-impl std::fmt::Display for InvalidError {
+impl std::fmt::Display for ValidationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let error_msg = match self {
             Self::TooManyPieces => "Too many pieces.",
@@ -53,4 +53,4 @@ impl std::fmt::Display for InvalidError {
     }
 }
 
-impl std::error::Error for InvalidError {}
+impl std::error::Error for ValidationError {}

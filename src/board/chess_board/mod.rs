@@ -206,16 +206,16 @@ impl ChessBoard {
         self.validate().is_ok()
     }
 
-    /// Validate the state of the board. Return Err([InvalidError]) if an issue is found.
-    pub fn validate(&self) -> Result<(), InvalidError> {
+    /// Validate the state of the board. Return Err([ValidationError]) if an issue is found.
+    pub fn validate(&self) -> Result<(), ValidationError> {
         // The current plie count should be odd on white's turn, and vice-versa.
         if self.total_plies() % 2 != self.current_player().index() as u32 {
-            return Err(InvalidError::IncoherentPlieCount);
+            return Err(ValidationError::IncoherentPlieCount);
         }
 
         // Make sure the clocks are in agreement.
         if self.half_move_clock() > self.total_plies() {
-            return Err(InvalidError::HalfMoveClockTooHigh);
+            return Err(ValidationError::HalfMoveClockTooHigh);
         }
 
         // Don't overlap pieces.
@@ -224,7 +224,7 @@ impl ChessBoard {
             for other in Piece::iter() {
                 if piece != other {
                     if !(self.piece_occupancy(piece) & self.piece_occupancy(other)).is_empty() {
-                        return Err(InvalidError::OverlappingPieces);
+                        return Err(ValidationError::OverlappingPieces);
                     }
                 }
             }
@@ -232,7 +232,7 @@ impl ChessBoard {
 
         // Don't overlap colors.
         if !(self.color_occupancy(Color::White) & self.color_occupancy(Color::Black)).is_empty() {
-            return Err(InvalidError::OverlappingColors);
+            return Err(ValidationError::OverlappingColors);
         }
 
         // Calculate the union of all pieces.
@@ -241,12 +241,12 @@ impl ChessBoard {
 
         // Ensure that the pre-computed version is accurate.
         if combined != self.combined_occupancy() {
-            return Err(InvalidError::ErroneousCombinedOccupancy);
+            return Err(ValidationError::ErroneousCombinedOccupancy);
         }
 
         // Ensure that all pieces belong to a color, and no color has pieces that don't exist.
         if combined != (self.color_occupancy(Color::White) | self.color_occupancy(Color::Black)) {
-            return Err(InvalidError::ErroneousCombinedOccupancy);
+            return Err(ValidationError::ErroneousCombinedOccupancy);
         }
 
         for color in Color::iter() {
@@ -260,18 +260,18 @@ impl ChessBoard {
                     _ => count <= 10,
                 };
                 if !possible {
-                    return Err(InvalidError::TooManyPieces);
+                    return Err(ValidationError::TooManyPieces);
                 }
             }
 
             // Check that we have a king
             if self.occupancy(Piece::King, color).count() != 1 {
-                return Err(InvalidError::MissingKing);
+                return Err(ValidationError::MissingKing);
             }
 
             // Check that don't have too many pieces in total
             if self.color_occupancy(color).count() > 16 {
-                return Err(InvalidError::TooManyPieces);
+                return Err(ValidationError::TooManyPieces);
             }
         }
 
@@ -280,7 +280,7 @@ impl ChessBoard {
             & (Rank::First.into_bitboard() | Rank::Eighth.into_bitboard()))
         .is_empty()
         {
-            return Err(InvalidError::InvalidPawnPosition);
+            return Err(ValidationError::InvalidPawnPosition);
         }
 
         // Verify that rooks and kings that are allowed to castle have not been moved.
@@ -296,14 +296,14 @@ impl ChessBoard {
             let expected_rooks = castle_rights.unmoved_rooks(color);
             // We must check the intersection, in case there are more than 2 rooks on the board.
             if (expected_rooks & actual_rooks) != expected_rooks {
-                return Err(InvalidError::InvalidCastlingRights);
+                return Err(ValidationError::InvalidCastlingRights);
             }
 
             let actual_king = self.occupancy(Piece::King, color);
             let expected_king = Square::new(File::E, color.first_rank());
             // We have checked that there is exactly one king, no need for intersecting the sets.
             if actual_king != expected_king.into_bitboard() {
-                return Err(InvalidError::InvalidCastlingRights);
+                return Err(ValidationError::InvalidCastlingRights);
             }
         }
 
@@ -311,14 +311,14 @@ impl ChessBoard {
         if let Some(square) = self.en_passant() {
             // Must be empty
             if !(self.combined_occupancy() & square).is_empty() {
-                return Err(InvalidError::InvalidEnPassant);
+                return Err(ValidationError::InvalidEnPassant);
             }
 
             let opponent = !self.current_player();
 
             // Must be on the opponent's third rank
             if (square & opponent.third_rank().into_bitboard()).is_empty() {
-                return Err(InvalidError::InvalidEnPassant);
+                return Err(ValidationError::InvalidEnPassant);
             }
 
             // Must be behind a pawn
@@ -328,7 +328,7 @@ impl ChessBoard {
                 .backward_direction()
                 .move_board(square.into_bitboard());
             if (opponent_pawns & double_pushed_pawn).is_empty() {
-                return Err(InvalidError::InvalidEnPassant);
+                return Err(ValidationError::InvalidEnPassant);
             }
         }
 
@@ -337,12 +337,12 @@ impl ChessBoard {
         let black_king = self.occupancy(Piece::King, Color::Black);
         // Unwrap is fine, we already checked that there is exactly one king of each color
         if !(movegen::king_moves(white_king.try_into().unwrap()) & black_king).is_empty() {
-            return Err(InvalidError::NeighbouringKings);
+            return Err(ValidationError::NeighbouringKings);
         }
 
         // Check that the opponent is not currently in check.
         if !self.compute_checkers(!self.current_player()).is_empty() {
-            return Err(InvalidError::OpponentInCheck);
+            return Err(ValidationError::OpponentInCheck);
         }
 
         Ok(())
@@ -445,7 +445,7 @@ mod test {
         };
         assert_eq!(
             position.validate().err().unwrap(),
-            InvalidError::IncoherentPlieCount,
+            ValidationError::IncoherentPlieCount,
         );
     }
 
@@ -458,7 +458,7 @@ mod test {
             builder.with_half_move_clock(10);
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::HalfMoveClockTooHigh);
+        assert_eq!(res.err().unwrap(), ValidationError::HalfMoveClockTooHigh);
     }
 
     #[test]
@@ -473,7 +473,7 @@ mod test {
         };
         assert_eq!(
             position.validate().err().unwrap(),
-            InvalidError::OverlappingPieces,
+            ValidationError::OverlappingPieces,
         );
     }
 
@@ -489,7 +489,7 @@ mod test {
         };
         assert_eq!(
             position.validate().err().unwrap(),
-            InvalidError::OverlappingColors,
+            ValidationError::OverlappingColors,
         );
     }
 
@@ -505,7 +505,7 @@ mod test {
         };
         assert_eq!(
             position.validate().err().unwrap(),
-            InvalidError::ErroneousCombinedOccupancy,
+            ValidationError::ErroneousCombinedOccupancy,
         );
     }
 
@@ -521,7 +521,7 @@ mod test {
         };
         assert_eq!(
             position.validate().err().unwrap(),
-            InvalidError::ErroneousCombinedOccupancy,
+            ValidationError::ErroneousCombinedOccupancy,
         );
     }
 
@@ -535,7 +535,7 @@ mod test {
             builder[Square::E8] = Some((Piece::King, Color::Black));
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::TooManyPieces);
+        assert_eq!(res.err().unwrap(), ValidationError::TooManyPieces);
     }
 
     #[test]
@@ -547,7 +547,7 @@ mod test {
             builder.with_castle_rights(CastleRights::BothSides, Color::White);
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::InvalidCastlingRights);
+        assert_eq!(res.err().unwrap(), ValidationError::InvalidCastlingRights);
     }
 
     #[test]
@@ -563,7 +563,7 @@ mod test {
             builder.with_castle_rights(CastleRights::BothSides, Color::White);
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::InvalidCastlingRights);
+        assert_eq!(res.err().unwrap(), ValidationError::InvalidCastlingRights);
     }
 
     #[test]
@@ -587,7 +587,7 @@ mod test {
             builder.with_en_passant(Square::A6);
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::InvalidEnPassant);
+        assert_eq!(res.err().unwrap(), ValidationError::InvalidEnPassant);
     }
 
     #[test]
@@ -600,7 +600,7 @@ mod test {
             builder.with_en_passant(Square::A6);
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::InvalidEnPassant);
+        assert_eq!(res.err().unwrap(), ValidationError::InvalidEnPassant);
     }
 
     #[test]
@@ -613,7 +613,7 @@ mod test {
             builder.with_en_passant(Square::A5);
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::InvalidEnPassant);
+        assert_eq!(res.err().unwrap(), ValidationError::InvalidEnPassant);
     }
 
     #[test]
@@ -624,7 +624,7 @@ mod test {
             builder[Square::E2] = Some((Piece::King, Color::Black));
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::NeighbouringKings);
+        assert_eq!(res.err().unwrap(), ValidationError::NeighbouringKings);
     }
 
     #[test]
@@ -636,7 +636,7 @@ mod test {
             builder[Square::E8] = Some((Piece::King, Color::Black));
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::OpponentInCheck);
+        assert_eq!(res.err().unwrap(), ValidationError::OpponentInCheck);
     }
 
     #[test]
@@ -648,7 +648,7 @@ mod test {
             builder[Square::H8] = Some((Piece::King, Color::Black));
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::InvalidPawnPosition);
+        assert_eq!(res.err().unwrap(), ValidationError::InvalidPawnPosition);
     }
 
     #[test]
@@ -665,7 +665,7 @@ mod test {
             }
             TryInto::<ChessBoard>::try_into(builder)
         };
-        assert_eq!(res.err().unwrap(), InvalidError::TooManyPieces);
+        assert_eq!(res.err().unwrap(), ValidationError::TooManyPieces);
     }
 
     #[test]
