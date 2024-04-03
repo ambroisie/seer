@@ -463,28 +463,13 @@ mod test {
 
     #[test]
     fn invalid_overlapping_pieces() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Square::E1 | Square::E8,
-                // Rook
-                Bitboard::EMPTY,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                Bitboard::EMPTY,
-            ],
-            color_occupancy: [Square::E1.into_bitboard(), Square::E8.into_bitboard()],
-            combined_occupancy: Square::E1 | Square::E8,
-            castle_rights: [CastleRights::NoSide; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let position = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            let mut board: ChessBoard = builder.try_into().unwrap();
+            *board.piece_occupancy_mut(Piece::Queen) |= Square::E1.into_bitboard();
+            board
         };
         assert_eq!(
             position.validate().err().unwrap(),
@@ -494,28 +479,13 @@ mod test {
 
     #[test]
     fn invalid_overlapping_colors() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Bitboard::EMPTY,
-                // Rook
-                Bitboard::EMPTY,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                Bitboard::EMPTY,
-            ],
-            color_occupancy: [Square::E1 | Square::E8, Square::E1 | Square::E8],
-            combined_occupancy: Square::E1 | Square::E8,
-            castle_rights: [CastleRights::NoSide; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let position = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            let mut board: ChessBoard = builder.try_into().unwrap();
+            *board.color_occupancy_mut(Color::White) |= Square::E8.into_bitboard();
+            board
         };
         assert_eq!(
             position.validate().err().unwrap(),
@@ -525,28 +495,13 @@ mod test {
 
     #[test]
     fn invalid_combined_does_not_equal_pieces() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Bitboard::EMPTY,
-                // Rook
-                Bitboard::EMPTY,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                Bitboard::EMPTY,
-            ],
-            color_occupancy: [Square::E1.into_bitboard(), Square::E8.into_bitboard()],
-            combined_occupancy: Square::E1.into_bitboard(),
-            castle_rights: [CastleRights::NoSide; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let position = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            let mut board: ChessBoard = builder.try_into().unwrap();
+            *board.piece_occupancy_mut(Piece::Pawn) |= Square::E2.into_bitboard();
+            board
         };
         assert_eq!(
             position.validate().err().unwrap(),
@@ -556,28 +511,13 @@ mod test {
 
     #[test]
     fn invalid_combined_does_not_equal_colors() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E1 | Square::E8,
-                // Queen
-                Bitboard::EMPTY,
-                // Rook
-                Bitboard::EMPTY,
-                // Bishop
-                Bitboard::EMPTY,
-                // Knight
-                Bitboard::EMPTY,
-                // Pawn
-                Bitboard::EMPTY,
-            ],
-            color_occupancy: [Square::E1 | Square::H1, Square::E8 | Square::H8],
-            combined_occupancy: Square::E1 | Square::E8,
-            castle_rights: [CastleRights::NoSide; 2],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let position = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::E1] = Some((Piece::King, Color::White));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            let mut board: ChessBoard = builder.try_into().unwrap();
+            *board.color_occupancy_mut(Color::Black) |= Square::E2.into_bitboard();
+            board
         };
         assert_eq!(
             position.validate().err().unwrap(),
