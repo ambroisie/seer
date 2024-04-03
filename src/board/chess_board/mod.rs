@@ -136,21 +136,32 @@ impl ChessBoard {
     #[inline(always)]
     pub fn do_move(&mut self, chess_move: Move) -> NonReversibleState {
         let opponent = !self.current_player();
+        let is_capture = !(self.combined_occupancy() & chess_move.destination()).is_empty();
+        let move_piece = Piece::iter()
+            .find(|&p| !(self.piece_occupancy(p) & chess_move.start()).is_empty())
+            .unwrap();
+        let captured_piece = Piece::iter()
+            .skip(1) // No need to check for the king here
+            .find(|&p| !(self.occupancy(p, opponent) & chess_move.destination()).is_empty());
+        let is_double_step = move_piece == Piece::Pawn
+            && chess_move.start().rank() == self.current_player().second_rank()
+            && chess_move.destination().rank() == self.current_player().fourth_rank();
+
         // Save non-revertible state
         let state = NonReversibleState {
             castle_rights: self.castle_rights,
             en_passant: self.en_passant,
             half_move_clock: self.half_move_clock,
-            captured_piece: chess_move.capture(),
+            captured_piece,
         };
 
         // Non-revertible state modification
-        if chess_move.capture().is_some() || chess_move.piece() == Piece::Pawn {
+        if is_capture || move_piece == Piece::Pawn {
             self.half_move_clock = 0;
         } else {
             self.half_move_clock += 1;
         }
-        if chess_move.is_double_step() {
+        if is_double_step {
             let target_square = Square::new(
                 chess_move.destination().file(),
                 self.current_player().third_rank(),
@@ -159,10 +170,10 @@ impl ChessBoard {
         } else {
             self.en_passant = None;
         }
-        if chess_move.is_castling() || chess_move.piece() == Piece::King {
+        if move_piece == Piece::King {
             *self.castle_rights_mut(self.current_player()) = CastleRights::NoSide;
         }
-        if chess_move.piece() == Piece::Rook {
+        if move_piece == Piece::Rook {
             let castle_rights = self.castle_rights_mut(self.current_player());
             *castle_rights = match chess_move.start().file() {
                 File::A => castle_rights.without_queen_side(),
@@ -170,7 +181,7 @@ impl ChessBoard {
                 _ => *castle_rights,
             }
         }
-        if let Some(piece) = chess_move.capture() {
+        if let Some(piece) = captured_piece {
             *self.piece_occupancy_mut(piece) ^= chess_move.destination();
             *self.color_occupancy_mut(opponent) ^= chess_move.destination();
             self.combined_occupancy ^= chess_move.destination();
@@ -179,7 +190,7 @@ impl ChessBoard {
         // Revertible state modification
         self.xor(
             self.current_player(),
-            chess_move.piece(),
+            move_piece,
             chess_move.start() | chess_move.destination(),
         );
         self.total_plies += 1;
@@ -196,8 +207,15 @@ impl ChessBoard {
         self.castle_rights = previous.castle_rights;
         self.en_passant = previous.en_passant;
         self.half_move_clock = previous.half_move_clock;
+
+        let move_piece = Piece::iter()
+            // We're looking for the *destination* as this is *undoing* the move
+            .find(|&p| !(self.piece_occupancy(p) & chess_move.destination()).is_empty())
+            .unwrap();
+
         if let Some(piece) = previous.captured_piece {
             *self.piece_occupancy_mut(piece) ^= chess_move.destination();
+            // The capture affected the *current* player, from our post-move POV
             *self.color_occupancy_mut(self.current_player()) ^= chess_move.destination();
             self.combined_occupancy ^= chess_move.destination();
         }
@@ -206,7 +224,7 @@ impl ChessBoard {
         self.xor(
             // The move was applied at the turn *before* the current player
             !self.current_player(),
-            chess_move.piece(),
+            move_piece,
             chess_move.start() | chess_move.destination(),
         );
         self.total_plies -= 1;
@@ -435,7 +453,6 @@ impl Default for ChessBoard {
 
 #[cfg(test)]
 mod test {
-    use crate::board::MoveBuilder;
     use crate::fen::FromFen;
 
     use super::*;
@@ -729,57 +746,21 @@ mod test {
         // Start from default position
         let mut position = ChessBoard::default();
         // Modify it to account for e4 move
-        position.do_move(
-            MoveBuilder {
-                piece: Piece::Pawn,
-                start: Square::E2,
-                destination: Square::E4,
-                capture: None,
-                promotion: None,
-                en_passant: false,
-                double_step: true,
-                castling: false,
-            }
-            .into(),
-        );
+        position.do_move(Move::new(Square::E2, Square::E4, None));
         assert_eq!(
             position,
             ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
                 .unwrap()
         );
         // And now c5
-        position.do_move(
-            MoveBuilder {
-                piece: Piece::Pawn,
-                start: Square::C7,
-                destination: Square::C5,
-                capture: None,
-                promotion: None,
-                en_passant: false,
-                double_step: true,
-                castling: false,
-            }
-            .into(),
-        );
+        position.do_move(Move::new(Square::C7, Square::C5, None));
         assert_eq!(
             position,
             ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2")
                 .unwrap()
         );
         // Finally, Nf3
-        position.do_move(
-            MoveBuilder {
-                piece: Piece::Knight,
-                start: Square::G1,
-                destination: Square::F3,
-                capture: None,
-                promotion: None,
-                en_passant: false,
-                double_step: false,
-                castling: false,
-            }
-            .into(),
-        );
+        position.do_move(Move::new(Square::G1, Square::F3, None));
         assert_eq!(
             position,
             ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ")
@@ -792,43 +773,13 @@ mod test {
         // Start from default position
         let mut position = ChessBoard::default();
         // Modify it to account for e4 move
-        let move_1 = MoveBuilder {
-            piece: Piece::Pawn,
-            start: Square::E2,
-            destination: Square::E4,
-            capture: None,
-            promotion: None,
-            en_passant: false,
-            double_step: true,
-            castling: false,
-        }
-        .into();
+        let move_1 = Move::new(Square::E2, Square::E4, None);
         let state_1 = position.do_move(move_1);
         // And now c5
-        let move_2 = MoveBuilder {
-            piece: Piece::Pawn,
-            start: Square::C7,
-            destination: Square::C5,
-            capture: None,
-            promotion: None,
-            en_passant: false,
-            double_step: true,
-            castling: false,
-        }
-        .into();
+        let move_2 = Move::new(Square::C7, Square::C5, None);
         let state_2 = position.do_move(move_2);
         // Finally, Nf3
-        let move_3 = MoveBuilder {
-            piece: Piece::Knight,
-            start: Square::G1,
-            destination: Square::F3,
-            capture: None,
-            promotion: None,
-            en_passant: false,
-            double_step: false,
-            castling: false,
-        }
-        .into();
+        let move_3 = Move::new(Square::G1, Square::F3, None);
         let state_3 = position.do_move(move_3);
         // Now revert each move one-by-one
         position.undo_move(move_3, state_3);
@@ -857,17 +808,7 @@ mod test {
         let expected = ChessBoard::from_fen("3Q3k/8/8/8/8/8/8/K7 b - - 0 1").unwrap();
         let original = position.clone();
 
-        let capture = MoveBuilder {
-            piece: Piece::Queen,
-            start: Square::D1,
-            destination: Square::D8,
-            capture: Some(Piece::Queen),
-            promotion: None,
-            en_passant: false,
-            double_step: false,
-            castling: false,
-        }
-        .into();
+        let capture = Move::new(Square::D1, Square::D8, None);
 
         let state = position.do_move(capture);
         assert_eq!(position, expected);

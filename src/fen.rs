@@ -202,7 +202,7 @@ impl FromFen for ChessBoard {
 
 #[cfg(test)]
 mod test {
-    use crate::board::MoveBuilder;
+    use crate::board::Move;
 
     use super::*;
 
@@ -220,57 +220,21 @@ mod test {
     fn en_passant() {
         // Start from default position
         let mut position = ChessBoard::default();
-        position.do_move(
-            MoveBuilder {
-                piece: Piece::Pawn,
-                start: Square::E2,
-                destination: Square::E4,
-                capture: None,
-                promotion: None,
-                en_passant: false,
-                double_step: true,
-                castling: false,
-            }
-            .into(),
-        );
+        position.do_move(Move::new(Square::E2, Square::E4, None));
         assert_eq!(
             ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
                 .unwrap(),
             position
         );
         // And now c5
-        position.do_move(
-            MoveBuilder {
-                piece: Piece::Pawn,
-                start: Square::C7,
-                destination: Square::C5,
-                capture: None,
-                promotion: None,
-                en_passant: false,
-                double_step: true,
-                castling: false,
-            }
-            .into(),
-        );
+        position.do_move(Move::new(Square::C7, Square::C5, None));
         assert_eq!(
             ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2")
                 .unwrap(),
             position
         );
         // Finally, Nf3
-        position.do_move(
-            MoveBuilder {
-                piece: Piece::Knight,
-                start: Square::G1,
-                destination: Square::F3,
-                capture: None,
-                promotion: None,
-                en_passant: false,
-                double_step: false,
-                castling: false,
-            }
-            .into(),
-        );
+        position.do_move(Move::new(Square::G1, Square::F3, None));
         assert_eq!(
             ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ")
                 .unwrap(),

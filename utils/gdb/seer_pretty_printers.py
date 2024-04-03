@@ -186,79 +186,35 @@ class Move(object):
     in memory.
     """
 
-    # Should be kept in sync with the values in `move.rs`
-    PIECE_SHIFT = 0
-    PIECE_MASK = 0b111
-    START_SHIFT = 3
-    START_MASK = 0b11_1111
-    DESTINATION_SHIFT = 9
-    DESTINATION_MASK = 0b11_1111
-    CAPTURE_SHIFT = 15
-    CAPTURE_MASK = 0b111
-    PROMOTION_SHIFT = 18
-    PROMOTION_MASK = 0b111
-    EN_PASSANT_SHIFT = 21
-    EN_PASSANT_MASK = 0b1
-    DOUBLE_STEP_SHIFT = 22
-    DOUBLE_STEP_MASK = 0b1
-    CASTLING_SHIFT = 23
-    CASTLING_MASK = 0b1
-
-    def __init__(self, val):
-        self._val = val
+    def __init__(self, start, destination, promotion):
+        self._start = Square(start)
+        self._destination = Square(destination)
+        self._promotion = Piece(promotion)
 
     @classmethod
     def from_gdb(cls, val):
-        return cls(int(val))
-
-    @property
-    def piece(self):
-        return Piece(self._val >> self.PIECE_SHIFT & self.PIECE_MASK)
+        start = Square(int(val["start"]))
+        destination = Square(int(val["destination"]))
+        promotion = optional(Piece.from_gdb, val["promotion"])
+        cls(start, destination, promotion)
 
     @property
     def start(self):
-        return Square(self._val >> self.START_SHIFT & self.START_MASK)
+        return self._start
 
     @property
     def destination(self):
-        return Square(self._val >> self.DESTINATION_SHIFT & self.DESTINATION_MASK)
-
-    @property
-    def capture(self):
-        index = self._val >> self.CAPTURE_SHIFT & self.CAPTURE_MASK
-        if index == 7:
-            return None
-        return Piece(index)
+        return self._destination
 
     @property
     def promotion(self):
-        index = self._val >> self.PROMOTION_SHIFT & self.PROMOTION_MASK
-        if index == 7:
-            return None
-        return Piece(index)
-
-    @property
-    def en_passant(self):
-        return bool(self._val >> self.EN_PASSANT_SHIFT & self.EN_PASSANT_MASK)
-
-    @property
-    def double_step(self):
-        return bool(self._val >> self.DOUBLE_STEP_SHIFT & self.DOUBLE_STEP_MASK)
-
-    @property
-    def castling(self):
-        return bool(self._val >> self.CASTLING_SHIFT & self.CASTLING_MASK)
+        return self._promotion
 
     def __str__(self):
         KEYS = [
-            "piece",
             "start",
             "destination",
-            "capture",
             "promotion",
-            "en_passant",
-            "double_step",
-            "castling",
         ]
         indent = lambda s: "    " + s
 
