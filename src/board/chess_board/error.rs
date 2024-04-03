@@ -1,4 +1,4 @@
-/// A singular type for all errors that could happen during [ChessBoard::is_valid].
+/// A singular type for all errors that could happen during [crate::board::ChessBoard::is_valid].
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ValidationError {
     /// Too many pieces.
