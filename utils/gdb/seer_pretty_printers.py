@@ -293,13 +293,13 @@ class ChessBoard(object):
     @classmethod
     def from_gdb(cls, val):
         return cls(
-            [int(val["piece_occupancy"][p]["__0"]) for p in Piece],
-            [int(val["color_occupancy"][c]["__0"]) for c in Color],
-            [int(val["castle_rights"][c]) for c in Color],
+            [Bitboard.from_gdb(val["piece_occupancy"][p]) for p in Piece],
+            [Bitboard.from_gdb(val["color_occupancy"][c]) for c in Color],
+            [CastleRights.from_gdb(val["castle_rights"][c]) for c in Color],
             int(val["half_move_clock"]),
             int(val["total_plies"]),
-            Color(int(val["side"])),
-            optional(int, val["en_passant"]),
+            Color.from_gdb(val["side"]),
+            optional(Square.from_gdb, val["en_passant"]),
         )
 
     def at(self, square):
@@ -349,7 +349,7 @@ class SquarePrinter(object):
     "Print a seer::board::square::Square"
 
     def __init__(self, val):
-        self._val = Square(val)
+        self._val = Square.from_gdb(val)
 
     def to_string(self):
         return str(self._val)
@@ -359,7 +359,7 @@ class BitboardPrinter(object):
     "Print a seer::board::bitboard::Bitboard"
 
     def __init__(self, val):
-        self._val = Bitboard(int(val["__0"]))
+        self._val = Bitboard.from_gdb(val)
 
     def to_string(self):
         return "Bitboard{" + str(self._val)[1:-1] + "}"
@@ -369,7 +369,7 @@ class CastleRightsPrinter(object):
     "Print a seer::board::castle_rights::CastleRights"
 
     def __init__(self, val):
-        self._val = CastleRights(int(val))
+        self._val = CastleRights.from_gdb(val)
 
     def to_string(self):
         return str(self._val)
@@ -379,7 +379,7 @@ class ColorPrinter(object):
     "Print a seer::board::color::Color"
 
     def __init__(self, val):
-        self._val = Color(int(val))
+        self._val = Color.from_gdb(val)
 
     def to_string(self):
         return str(self._val)
@@ -389,7 +389,7 @@ class FilePrinter(object):
     "Print a seer::board::file::File"
 
     def __init__(self, val):
-        self._val = File(int(val))
+        self._val = File.from_gdb(val)
 
     def to_string(self):
         return str(self._val)
@@ -399,7 +399,7 @@ class RankPrinter(object):
     "Print a seer::board::rank::Rank"
 
     def __init__(self, val):
-        self._val = Rank(int(val))
+        self._val = Rank.from_gdb(val)
 
     def to_string(self):
         return str(self._val)
@@ -409,7 +409,7 @@ class PiecePrinter(object):
     "Print a seer::board::piece::Piece"
 
     def __init__(self, val):
-        self._val = Piece(int(val))
+        self._val = Piece.from_gdb(val)
 
     def to_string(self):
         return str(self._val)
@@ -419,7 +419,7 @@ class MovePrinter(object):
     "Print a seer::board::move::Move"
 
     def __init__(self, val):
-        self._val = Move(int(val["__0"]))
+        self._val = Move.from_gdb(val)
 
     def to_string(self):
         return str(self._val)
