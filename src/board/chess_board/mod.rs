@@ -37,6 +37,7 @@ pub struct NonReversibleState {
     castle_rights: [CastleRights; Color::NUM_VARIANTS],
     en_passant: Option<Square>,
     half_move_clock: u32, // Should *probably* never go higher than 100.
+    captured_piece: Option<Piece>,
 }
 
 impl ChessBoard {
@@ -134,11 +135,13 @@ impl ChessBoard {
     /// Play the given [Move], returning all non-revertible state (e.g: en-passant, etc...).
     #[inline(always)]
     pub fn do_move(&mut self, chess_move: Move) -> NonReversibleState {
+        let opponent = !self.current_player();
         // Save non-revertible state
         let state = NonReversibleState {
             castle_rights: self.castle_rights,
             en_passant: self.en_passant,
             half_move_clock: self.half_move_clock,
+            captured_piece: chess_move.capture(),
         };
 
         // Non-revertible state modification
@@ -167,6 +170,11 @@ impl ChessBoard {
                 _ => *castle_rights,
             }
         }
+        if let Some(piece) = chess_move.capture() {
+            *self.piece_occupancy_mut(piece) ^= chess_move.destination();
+            *self.color_occupancy_mut(opponent) ^= chess_move.destination();
+            self.combined_occupancy ^= chess_move.destination();
+        }
 
         // Revertible state modification
         self.xor(
@@ -188,6 +196,11 @@ impl ChessBoard {
         self.castle_rights = previous.castle_rights;
         self.en_passant = previous.en_passant;
         self.half_move_clock = previous.half_move_clock;
+        if let Some(piece) = previous.captured_piece {
+            *self.piece_occupancy_mut(piece) ^= chess_move.destination();
+            *self.color_occupancy_mut(self.current_player()) ^= chess_move.destination();
+            self.combined_occupancy ^= chess_move.destination();
+        }
 
         // Restore revertible state
         self.xor(
@@ -836,5 +849,30 @@ mod test {
             ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
                 .unwrap()
         );
+    }
+
+    #[test]
+    fn do_move_undo_capture() {
+        let mut position = ChessBoard::from_fen("3q3k/8/8/8/8/8/8/K2Q4 w - - 0 1").unwrap();
+        let expected = ChessBoard::from_fen("3Q3k/8/8/8/8/8/8/K7 b - - 0 1").unwrap();
+        let original = position.clone();
+
+        let capture = MoveBuilder {
+            piece: Piece::Queen,
+            start: Square::D1,
+            destination: Square::D8,
+            capture: Some(Piece::Queen),
+            promotion: None,
+            en_passant: false,
+            double_step: false,
+            castling: false,
+        }
+        .into();
+
+        let state = position.do_move(capture);
+        assert_eq!(position, expected);
+
+        position.undo_move(capture, state);
+        assert_eq!(position, original);
     }
 }
