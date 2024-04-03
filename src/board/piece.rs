@@ -28,6 +28,10 @@ impl Piece {
     }
 
     /// Convert from a piece index into a [Piece] type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is out of bounds.
     #[inline(always)]
     pub fn from_index(index: usize) -> Self {
         assert!(index < Self::NUM_VARIANTS);

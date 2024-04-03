@@ -39,6 +39,10 @@ impl Square {
     ];
 
     /// Construct a [Square] from a [File] and [Rank].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is out of bounds.
     #[inline(always)]
     pub fn new(file: File, rank: Rank) -> Self {
         // SAFETY: we know the value is in-bounds

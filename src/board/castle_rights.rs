@@ -18,6 +18,10 @@ impl CastleRights {
     pub const NUM_VARIANTS: usize = 4;
 
     /// Convert from a castle rights index into a [CastleRights] type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is out of bounds.
     #[inline(always)]
     pub fn from_index(index: usize) -> Self {
         assert!(index < Self::NUM_VARIANTS);
