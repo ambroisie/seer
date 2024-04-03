@@ -197,6 +197,8 @@ pub(crate) const ROOK_SEED: [u64; 64] = [
 
 #[cfg(test)]
 mod test {
+    use std::fmt::Write as _;
+
     use super::*;
 
     // A simple XOR-shift RNG implementation.
@@ -238,20 +240,25 @@ mod test {
         Some((prefix, mid, suffix))
     }
 
-    fn array_string(piece_type: &str, values: &[Magic]) -> String {
-        let mut res = format!(
-            "/// A set of magic numbers for {} move generation.\n",
+    fn array_string(piece_type: &str, values: &[Magic]) -> Result<String, std::fmt::Error> {
+        let mut res = String::new();
+
+        writeln!(
+            &mut res,
+            "/// A set of magic numbers for {} move generation.",
             piece_type
-        );
-        res.push_str(&format!(
-            "pub(crate) const {}_SEED: [u64; 64] = [\n",
+        )?;
+        writeln!(
+            &mut res,
+            "pub(crate) const {}_SEED: [u64; 64] = [",
             piece_type.to_uppercase()
-        ));
+        )?;
         for magic in values {
-            res.push_str(&format!("    {},\n", magic.magic));
+            writeln!(&mut res, "    {},", magic.magic)?;
         }
-        res.push_str("];\n");
-        res
+        writeln!(&mut res, "];")?;
+
+        Ok(res)
     }
 
     #[test]
@@ -264,8 +271,8 @@ mod test {
 
         let original_text = std::fs::read_to_string(file!()).unwrap();
 
-        let bishop_array = array_string("bishop", &bishop_magics[..]);
-        let rook_array = array_string("rook", &rook_magics[..]);
+        let bishop_array = array_string("bishop", &bishop_magics[..]).unwrap();
+        let rook_array = array_string("rook", &rook_magics[..]).unwrap();
 
         let new_text = {
             let start_marker = "// region:sourcegen\n";
