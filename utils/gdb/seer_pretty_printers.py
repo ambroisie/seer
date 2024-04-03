@@ -13,6 +13,8 @@ class Square(object):
     RANKS = list(map(lambda n: str(n + 1), range(8)))
 
     def __init__(self, val):
+        if isinstance(val, Square):
+            val = val._val
         self._val = val
 
     @classmethod
@@ -37,6 +39,8 @@ class Bitboard(object):
     """
 
     def __init__(self, val):
+        if isinstance(val, Bitboard):
+            val = val._val
         self._val = val
 
     def __str__(self):
