@@ -411,7 +411,7 @@ impl Default for ChessBoard {
                 | Rank::Second.into_bitboard()
                 | Rank::Seventh.into_bitboard()
                 | Rank::Eighth.into_bitboard(),
-            castle_rights: [CastleRights::BothSides; 2],
+            castle_rights: [CastleRights::BothSides; Color::NUM_VARIANTS],
             en_passant: None,
             half_move_clock: 0,
             total_plies: 0,
@@ -699,7 +699,7 @@ mod test {
                 | Square::F3
                 | Square::G1
                 | Square::H2,
-            castle_rights: [CastleRights::NoSide; 2],
+            castle_rights: [CastleRights::NoSide; Color::NUM_VARIANTS],
             en_passant: None,
             half_move_clock: 0,
             total_plies: 0,

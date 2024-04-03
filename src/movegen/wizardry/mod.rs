@@ -59,7 +59,7 @@ impl MagicMoves {
 
 // region:sourcegen
 /// A set of magic numbers for bishop move generation.
-pub(crate) const BISHOP_SEED: [u64; 64] = [
+pub(crate) const BISHOP_SEED: [u64; Square::NUM_VARIANTS] = [
     4908958787341189172,
     1157496606860279808,
     289395876198088778,
@@ -127,7 +127,7 @@ pub(crate) const BISHOP_SEED: [u64; 64] = [
 ];
 
 /// A set of magic numbers for rook move generation.
-pub(crate) const ROOK_SEED: [u64; 64] = [
+pub(crate) const ROOK_SEED: [u64; Square::NUM_VARIANTS] = [
     2341871943948451840,
     18015635528220736,
     72066665545773824,
@@ -250,7 +250,7 @@ mod test {
         )?;
         writeln!(
             &mut res,
-            "pub(crate) const {}_SEED: [u64; 64] = [",
+            "pub(crate) const {}_SEED: [u64; Square::NUM_VARIANTS] = [",
             piece_type.to_uppercase()
         )?;
         for magic in values {

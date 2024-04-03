@@ -13,12 +13,12 @@ use crate::{
 
 // A pre-rolled RNG for magic bitboard generation, using pre-determined values.
 struct PreRolledRng {
-    numbers: [u64; 64],
+    numbers: [u64; Square::NUM_VARIANTS],
     current_index: usize,
 }
 
 impl PreRolledRng {
-    pub fn new(numbers: [u64; 64]) -> Self {
+    pub fn new(numbers: [u64; Square::NUM_VARIANTS]) -> Self {
         Self {
             numbers,
             current_index: 0,
@@ -39,7 +39,8 @@ impl RandGen for PreRolledRng {
 /// Compute the set of possible non-attack moves for a pawn on a [Square], given its [Color] and
 /// set of blockers.
 pub fn pawn_quiet_moves(color: Color, square: Square, blockers: Bitboard) -> Bitboard {
-    static PAWN_MOVES: OnceLock<[[Bitboard; 64]; 2]> = OnceLock::new();
+    static PAWN_MOVES: OnceLock<[[Bitboard; Square::NUM_VARIANTS]; Color::NUM_VARIANTS]> =
+        OnceLock::new();
 
     // If there is a piece in front of the pawn, it can't advance
     if !(color.backward_direction().move_board(blockers) & square).is_empty() {
@@ -47,7 +48,7 @@ pub fn pawn_quiet_moves(color: Color, square: Square, blockers: Bitboard) -> Bit
     }
 
     PAWN_MOVES.get_or_init(|| {
-        let mut res = [[Bitboard::EMPTY; 64]; 2];
+        let mut res = [[Bitboard::EMPTY; Square::NUM_VARIANTS]; Color::NUM_VARIANTS];
         for color in Color::iter() {
             for square in Square::iter() {
                 res[color.index()][square.index()] =
@@ -60,10 +61,11 @@ pub fn pawn_quiet_moves(color: Color, square: Square, blockers: Bitboard) -> Bit
 
 /// Compute the set of possible attacks for a pawn on a [Square], given its [Color].
 pub fn pawn_attacks(color: Color, square: Square) -> Bitboard {
-    static PAWN_ATTACKS: OnceLock<[[Bitboard; 64]; 2]> = OnceLock::new();
+    static PAWN_ATTACKS: OnceLock<[[Bitboard; Square::NUM_VARIANTS]; Color::NUM_VARIANTS]> =
+        OnceLock::new();
 
     PAWN_ATTACKS.get_or_init(|| {
-        let mut res = [[Bitboard::EMPTY; 64]; 2];
+        let mut res = [[Bitboard::EMPTY; Square::NUM_VARIANTS]; Color::NUM_VARIANTS];
         for color in Color::iter() {
             for square in Square::iter() {
                 res[color.index()][square.index()] = naive::pawn_captures(color, square);
@@ -81,9 +83,9 @@ pub fn pawn_moves(color: Color, square: Square, blockers: Bitboard) -> Bitboard 
 
 /// Compute the set of possible moves for a knight on a [Square].
 pub fn knight_moves(square: Square) -> Bitboard {
-    static KNIGHT_MOVES: OnceLock<[Bitboard; 64]> = OnceLock::new();
+    static KNIGHT_MOVES: OnceLock<[Bitboard; Square::NUM_VARIANTS]> = OnceLock::new();
     KNIGHT_MOVES.get_or_init(|| {
-        let mut res = [Bitboard::EMPTY; 64];
+        let mut res = [Bitboard::EMPTY; Square::NUM_VARIANTS];
         for square in Square::iter() {
             res[square.index()] = naive::knight_moves(square)
         }
@@ -122,9 +124,9 @@ pub fn queen_moves(square: Square, blockers: Bitboard) -> Bitboard {
 
 /// Compute the set of possible moves for a king on a [Square].
 pub fn king_moves(square: Square) -> Bitboard {
-    static KING_MOVES: OnceLock<[Bitboard; 64]> = OnceLock::new();
+    static KING_MOVES: OnceLock<[Bitboard; Square::NUM_VARIANTS]> = OnceLock::new();
     KING_MOVES.get_or_init(|| {
-        let mut res = [Bitboard::EMPTY; 64];
+        let mut res = [Bitboard::EMPTY; Square::NUM_VARIANTS];
         for square in Square::iter() {
             res[square.index()] = naive::king_moves(square)
         }

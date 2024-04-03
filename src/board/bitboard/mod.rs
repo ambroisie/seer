@@ -1,4 +1,4 @@
-use super::Square;
+use super::{File, Rank, Square};
 use crate::utils::static_assert;
 
 mod error;
@@ -21,7 +21,7 @@ impl Bitboard {
     pub const ALL: Bitboard = Bitboard(u64::MAX);
 
     /// Array of bitboards representing the eight ranks, in order from rank 1 to rank 8.
-    pub const RANKS: [Self; 8] = [
+    pub const RANKS: [Self; Rank::NUM_VARIANTS] = [
         Bitboard(0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001),
         Bitboard(0b00000010_00000010_00000010_00000010_00000010_00000010_00000010_00000010),
         Bitboard(0b00000100_00000100_00000100_00000100_00000100_00000100_00000100_00000100),
@@ -33,7 +33,7 @@ impl Bitboard {
     ];
 
     /// Array of bitboards representing the eight files, in order from file A to file H.
-    pub const FILES: [Self; 8] = [
+    pub const FILES: [Self; File::NUM_VARIANTS] = [
         Bitboard(0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_11111111),
         Bitboard(0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_00000000),
         Bitboard(0b00000000_00000000_00000000_00000000_00000000_11111111_00000000_00000000),

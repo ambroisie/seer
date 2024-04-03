@@ -4,7 +4,7 @@ use crate::board::{Bitboard, CastleRights, ChessBoard, Color, Piece, Square, Val
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ChessBoardBuilder {
     /// The list of [Piece] on the board. Indexed by [Square::index].
-    pieces: [Option<(Piece, Color)>; 64],
+    pieces: [Option<(Piece, Color)>; Square::NUM_VARIANTS],
     // Same fields as [ChessBoard].
     castle_rights: [CastleRights; Color::NUM_VARIANTS],
     en_passant: Option<Square>,
@@ -17,8 +17,8 @@ pub struct ChessBoardBuilder {
 impl ChessBoardBuilder {
     pub fn new() -> Self {
         Self {
-            pieces: [None; 64],
-            castle_rights: [CastleRights::NoSide; 2],
+            pieces: [None; Square::NUM_VARIANTS],
+            castle_rights: [CastleRights::NoSide; Color::NUM_VARIANTS],
             en_passant: Default::default(),
             half_move_clock: Default::default(),
             side: Color::White,

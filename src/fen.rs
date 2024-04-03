@@ -37,7 +37,7 @@ impl From<ValidationError> for FenError {
 }
 
 /// Convert the castling rights segment of a FEN string to an array of [CastleRights].
-impl FromFen for [CastleRights; 2] {
+impl FromFen for [CastleRights; Color::NUM_VARIANTS] {
     type Err = FenError;
 
     fn from_fen(s: &str) -> Result<Self, Self::Err> {
@@ -45,7 +45,7 @@ impl FromFen for [CastleRights; 2] {
             return Err(FenError::InvalidFen);
         }
 
-        let mut res = [CastleRights::NoSide; 2];
+        let mut res = [CastleRights::NoSide; Color::NUM_VARIANTS];
 
         if s == "-" {
             return Ok(res);
@@ -134,7 +134,7 @@ impl FromFen for ChessBoard {
 
         let mut builder = ChessBoardBuilder::new();
 
-        let castle_rights = <[CastleRights; 2]>::from_fen(castling_rights)?;
+        let castle_rights = <[CastleRights; Color::NUM_VARIANTS]>::from_fen(castling_rights)?;
         for color in Color::iter() {
             builder.with_castle_rights(castle_rights[color.index()], color);
         }
