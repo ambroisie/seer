@@ -34,9 +34,18 @@ impl Piece {
     /// Panics if the index is out of bounds.
     #[inline(always)]
     pub fn from_index(index: usize) -> Self {
-        assert!(index < Self::NUM_VARIANTS);
-        // SAFETY: we know the value is in-bounds
-        unsafe { Self::from_index_unchecked(index) }
+        Self::try_from_index(index).expect("index out of bouds")
+    }
+
+    /// Convert from a piece index into a [Piece] type. Returns [None] if the index is out of
+    /// bounds.
+    pub fn try_from_index(index: usize) -> Option<Self> {
+        if index < Self::NUM_VARIANTS {
+            // SAFETY: we know the value is in-bounds
+            Some(unsafe { Self::from_index_unchecked(index) })
+        } else {
+            None
+        }
     }
 
     /// Convert from a piece index into a [Piece] type, no bounds checking.
