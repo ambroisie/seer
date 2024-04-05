@@ -185,6 +185,13 @@ impl ChessBoard {
             *self.piece_occupancy_mut(piece) ^= chess_move.destination();
             *self.color_occupancy_mut(opponent) ^= chess_move.destination();
             self.combined_occupancy ^= chess_move.destination();
+            // If a rook is captured, it loses its castling rights
+            let castle_rights = self.castle_rights_mut(opponent);
+            *castle_rights = match (piece, chess_move.destination().file()) {
+                (Piece::Rook, File::A) => castle_rights.without_queen_side(),
+                (Piece::Rook, File::H) => castle_rights.without_king_side(),
+                _ => *castle_rights,
+            };
         }
 
         // Revertible state modification
@@ -766,6 +773,17 @@ mod test {
             ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ")
                 .unwrap()
         );
+    }
+
+    #[test]
+    fn do_move_capture_changes_castling() {
+        let mut position = ChessBoard::from_fen("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1").unwrap();
+        let expected = ChessBoard::from_fen("r3k2R/8/8/8/8/8/8/R3K3 b Qq - 0 1").unwrap();
+
+        let capture = Move::new(Square::H1, Square::H8, None);
+
+        position.do_move(capture);
+        assert_eq!(position, expected);
     }
 
     #[test]
