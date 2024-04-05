@@ -170,17 +170,13 @@ impl ChessBoard {
         } else {
             self.en_passant = None;
         }
-        if move_piece == Piece::King {
-            *self.castle_rights_mut(self.current_player()) = CastleRights::NoSide;
-        }
-        if move_piece == Piece::Rook {
-            let castle_rights = self.castle_rights_mut(self.current_player());
-            *castle_rights = match chess_move.start().file() {
-                File::A => castle_rights.without_queen_side(),
-                File::H => castle_rights.without_king_side(),
-                _ => *castle_rights,
-            }
-        }
+        let castle_rights = self.castle_rights_mut(self.current_player());
+        *castle_rights = match (move_piece, chess_move.start().file()) {
+            (Piece::Rook, File::A) => castle_rights.without_queen_side(),
+            (Piece::Rook, File::H) => castle_rights.without_king_side(),
+            (Piece::King, _) => CastleRights::NoSide,
+            _ => *castle_rights,
+        };
         if let Some(piece) = captured_piece {
             *self.piece_occupancy_mut(piece) ^= chess_move.destination();
             *self.color_occupancy_mut(opponent) ^= chess_move.destination();
