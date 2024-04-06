@@ -177,6 +177,19 @@ impl ChessBoard {
         self.hash ^= zobrist::castling_rights(self.castle_rights);
     }
 
+    fn update_en_passant(&mut self, en_passant: Option<Square>) {
+        self.hash ^= self
+            .en_passant()
+            .map(Square::file)
+            .map(zobrist::en_passant)
+            .unwrap_or(0);
+        self.hash ^= en_passant
+            .map(Square::file)
+            .map(zobrist::en_passant)
+            .unwrap_or(0);
+        self.en_passant = en_passant;
+    }
+
     /// Play the given [Move], return a copy of the board with the resulting state.
     #[inline(always)]
     pub fn play_move(&self, chess_move: Move) -> Self {
@@ -223,18 +236,7 @@ impl ChessBoard {
         } else {
             None
         };
-        if self.en_passant() != en_passant {
-            self.hash ^= self
-                .en_passant()
-                .map(Square::file)
-                .map(zobrist::en_passant)
-                .unwrap_or(0);
-            self.hash ^= en_passant
-                .map(Square::file)
-                .map(zobrist::en_passant)
-                .unwrap_or(0);
-            self.en_passant = en_passant;
-        }
+        self.update_en_passant(en_passant);
         self.update_castling(self.current_player(), move_piece, chess_move.start().file());
         if let Some(piece) = captured_piece {
             self.xor(opponent, piece, chess_move.destination());
@@ -262,19 +264,7 @@ impl ChessBoard {
             self.hash ^= zobrist::castling_rights(previous.castle_rights);
             self.castle_rights = previous.castle_rights;
         }
-        if self.en_passant != previous.en_passant {
-            self.hash ^= self
-                .en_passant()
-                .map(Square::file)
-                .map(zobrist::en_passant)
-                .unwrap_or(0);
-            self.hash ^= previous
-                .en_passant
-                .map(Square::file)
-                .map(zobrist::en_passant)
-                .unwrap_or(0);
-            self.en_passant = previous.en_passant;
-        }
+        self.update_en_passant(previous.en_passant);
         self.half_move_clock = previous.half_move_clock;
 
         let move_piece = Piece::iter()
