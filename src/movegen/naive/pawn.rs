@@ -38,17 +38,6 @@ pub fn pawn_captures(color: Color, square: Square) -> Bitboard {
     attack_west | attack_east
 }
 
-/// Computes the set of squares that can capture this one *en-passant*.
-#[allow(unused)]
-pub fn en_passant_origins(square: Square) -> Bitboard {
-    let board = square.into_bitboard();
-
-    let origin_west = Direction::West.move_board(board);
-    let origin_east = Direction::East.move_board(board);
-
-    origin_west | origin_east
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -123,15 +112,5 @@ mod test {
             pawn_captures(Color::Black, Square::H7),
             Square::G6.into_bitboard()
         );
-    }
-
-    #[test]
-    fn en_passant() {
-        assert_eq!(en_passant_origins(Square::A4), Square::B4.into_bitboard());
-        assert_eq!(en_passant_origins(Square::A5), Square::B5.into_bitboard());
-        assert_eq!(en_passant_origins(Square::B4), Square::A4 | Square::C4);
-        assert_eq!(en_passant_origins(Square::B5), Square::A5 | Square::C5);
-        assert_eq!(en_passant_origins(Square::H4), Square::G4.into_bitboard());
-        assert_eq!(en_passant_origins(Square::H5), Square::G5.into_bitboard());
     }
 }
