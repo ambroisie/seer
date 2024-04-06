@@ -123,13 +123,12 @@ impl ChessBoard {
         self.compute_checkers(self.current_player())
     }
 
-    /// Quickly do and undo a move on the [Bitboard]s that are part of the [ChessBoard] state. Does
-    /// not account for all non-revertible changes such as en-passant state or half-move clock.
+    /// Quickly add/remove a piece on the [Bitboard]s that are part of the [ChessBoard] state.
     #[inline(always)]
-    fn xor(&mut self, color: Color, piece: Piece, start_end: Bitboard) {
-        *self.piece_occupancy_mut(piece) ^= start_end;
-        *self.color_occupancy_mut(color) ^= start_end;
-        self.combined_occupancy ^= start_end;
+    fn xor(&mut self, color: Color, piece: Piece, square: Square) {
+        *self.piece_occupancy_mut(piece) ^= square;
+        *self.color_occupancy_mut(color) ^= square;
+        self.combined_occupancy ^= square;
     }
 
     /// Play the given [Move], return a copy of the board with the resulting state.
@@ -186,9 +185,7 @@ impl ChessBoard {
             _ => *castle_rights,
         };
         if let Some(piece) = captured_piece {
-            *self.piece_occupancy_mut(piece) ^= chess_move.destination();
-            *self.color_occupancy_mut(opponent) ^= chess_move.destination();
-            self.combined_occupancy ^= chess_move.destination();
+            self.xor(opponent, piece, chess_move.destination());
             // If a rook is captured, it loses its castling rights
             let castle_rights = self.castle_rights_mut(opponent);
             *castle_rights = match (piece, chess_move.destination().file()) {
@@ -199,11 +196,8 @@ impl ChessBoard {
         }
 
         // Revertible state modification
-        self.xor(
-            self.current_player(),
-            move_piece,
-            chess_move.start() | chess_move.destination(),
-        );
+        self.xor(self.current_player(), move_piece, chess_move.start());
+        self.xor(self.current_player(), move_piece, chess_move.destination());
         self.total_plies += 1;
         self.side = !self.side;
 
@@ -225,19 +219,13 @@ impl ChessBoard {
             .unwrap();
 
         if let Some(piece) = previous.captured_piece {
-            *self.piece_occupancy_mut(piece) ^= chess_move.destination();
             // The capture affected the *current* player, from our post-move POV
-            *self.color_occupancy_mut(self.current_player()) ^= chess_move.destination();
-            self.combined_occupancy ^= chess_move.destination();
+            self.xor(self.current_player(), piece, chess_move.destination());
         }
 
         // Restore revertible state
-        self.xor(
-            // The move was applied at the turn *before* the current player
-            !self.current_player(),
-            move_piece,
-            chess_move.start() | chess_move.destination(),
-        );
+        self.xor(!self.current_player(), move_piece, chess_move.destination());
+        self.xor(!self.current_player(), move_piece, chess_move.start());
         self.total_plies -= 1;
         self.side = !self.side;
     }
