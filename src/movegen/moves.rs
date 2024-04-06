@@ -5,10 +5,10 @@ use crate::{
     movegen::{
         naive,
         wizardry::{
-            generate_bishop_magics, generate_rook_magics, MagicMoves, RandGen, BISHOP_SEED,
-            ROOK_SEED,
+            generate_bishop_magics, generate_rook_magics, MagicMoves, BISHOP_SEED, ROOK_SEED,
         },
     },
+    utils::RandGen,
 };
 
 // A pre-rolled RNG for magic bitboard generation, using pre-determined values.
