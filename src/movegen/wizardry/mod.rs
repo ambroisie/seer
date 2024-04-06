@@ -212,25 +212,29 @@ mod test {
         Some((prefix, mid, suffix))
     }
 
-    fn array_string(piece_type: &str, values: &[Magic]) -> Result<String, std::fmt::Error> {
-        let mut res = String::new();
+    fn array_string(piece_type: &str, values: &[Magic]) -> String {
+        let inner = || -> Result<String, std::fmt::Error> {
+            let mut res = String::new();
 
-        writeln!(
-            &mut res,
-            "/// A set of magic numbers for {} move generation.",
-            piece_type
-        )?;
-        writeln!(
-            &mut res,
-            "pub(crate) const {}_SEED: [u64; Square::NUM_VARIANTS] = [",
-            piece_type.to_uppercase()
-        )?;
-        for magic in values {
-            writeln!(&mut res, "    {},", magic.magic)?;
-        }
-        writeln!(&mut res, "];")?;
+            writeln!(
+                &mut res,
+                "/// A set of magic numbers for {} move generation.",
+                piece_type
+            )?;
+            writeln!(
+                &mut res,
+                "pub(crate) const {}_SEED: [u64; Square::NUM_VARIANTS] = [",
+                piece_type.to_uppercase()
+            )?;
+            for magic in values {
+                writeln!(&mut res, "    {},", magic.magic)?;
+            }
+            writeln!(&mut res, "];")?;
 
-        Ok(res)
+            Ok(res)
+        };
+
+        inner().unwrap()
     }
 
     #[test]
@@ -243,8 +247,8 @@ mod test {
 
         let original_text = std::fs::read_to_string(file!()).unwrap();
 
-        let bishop_array = array_string("bishop", &bishop_magics[..]).unwrap();
-        let rook_array = array_string("rook", &rook_magics[..]).unwrap();
+        let bishop_array = array_string("bishop", &bishop_magics[..]);
+        let rook_array = array_string("rook", &rook_magics[..]);
 
         let new_text = {
             let start_marker = "// region:sourcegen\n";
