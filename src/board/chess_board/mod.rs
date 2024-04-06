@@ -47,7 +47,7 @@ impl ChessBoard {
         self.side
     }
 
-    /// Return the [Square] currently occupied by a pawn that can be captured en-passant, or `None`
+    /// Return the target [Square] that can be captured en-passant, or `None`
     #[inline(always)]
     pub fn en_passant(&self) -> Option<Square> {
         self.en_passant
