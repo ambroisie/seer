@@ -711,40 +711,19 @@ mod test {
 
     #[test]
     fn checkers() {
-        let position = ChessBoard {
-            piece_occupancy: [
-                // King
-                Square::E2 | Square::E8,
-                // Queen
-                Square::E7 | Square::H2,
-                // Rook
-                Square::A2 | Square::E1,
-                // Bishop
-                Square::D3 | Square::F3,
-                // Knight
-                Square::C1 | Square::G1,
-                // Pawn
-                Bitboard::EMPTY,
-            ],
-            color_occupancy: [
-                Square::C1 | Square::D3 | Square::E1 | Square::E2 | Square::H2,
-                Square::A2 | Square::E7 | Square::E8 | Square::F3 | Square::G1,
-            ],
-            combined_occupancy: Square::A2
-                | Square::C1
-                | Square::D3
-                | Square::E1
-                | Square::E2
-                | Square::E7
-                | Square::E8
-                | Square::F3
-                | Square::G1
-                | Square::H2,
-            castle_rights: [CastleRights::NoSide; Color::NUM_VARIANTS],
-            en_passant: None,
-            half_move_clock: 0,
-            total_plies: 0,
-            side: Color::White,
+        let position = {
+            let mut builder = ChessBoardBuilder::new();
+            builder[Square::C1] = Some((Piece::Knight, Color::White));
+            builder[Square::D3] = Some((Piece::Bishop, Color::White));
+            builder[Square::E1] = Some((Piece::Rook, Color::White));
+            builder[Square::E2] = Some((Piece::King, Color::White));
+            builder[Square::H2] = Some((Piece::Queen, Color::White));
+            builder[Square::G1] = Some((Piece::Knight, Color::Black));
+            builder[Square::F3] = Some((Piece::Bishop, Color::Black));
+            builder[Square::A2] = Some((Piece::Rook, Color::Black));
+            builder[Square::E8] = Some((Piece::King, Color::Black));
+            builder[Square::E7] = Some((Piece::Queen, Color::Black));
+            TryInto::<ChessBoard>::try_into(builder).unwrap()
         };
         assert_eq!(
             position.checkers(),
