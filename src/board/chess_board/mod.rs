@@ -132,9 +132,10 @@ impl ChessBoard {
         self.combined_occupancy ^= start_end;
     }
 
-    /// Play the given [Move], returning all non-revertible state (e.g: en-passant, etc...).
+    /// Play the given [Move] in place, returning all non-revertible state (e.g: en-passant,
+    /// etc...).
     #[inline(always)]
-    pub fn play_move(&mut self, chess_move: Move) -> NonReversibleState {
+    pub fn play_move_inplace(&mut self, chess_move: Move) -> NonReversibleState {
         let opponent = !self.current_player();
         let is_capture = !(self.combined_occupancy() & chess_move.destination()).is_empty();
         let move_piece = Piece::iter()
@@ -749,21 +750,21 @@ mod test {
         // Start from default position
         let mut position = ChessBoard::default();
         // Modify it to account for e4 move
-        position.play_move(Move::new(Square::E2, Square::E4, None));
+        position.play_move_inplace(Move::new(Square::E2, Square::E4, None));
         assert_eq!(
             position,
             ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
                 .unwrap()
         );
         // And now c5
-        position.play_move(Move::new(Square::C7, Square::C5, None));
+        position.play_move_inplace(Move::new(Square::C7, Square::C5, None));
         assert_eq!(
             position,
             ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2")
                 .unwrap()
         );
         // Finally, Nf3
-        position.play_move(Move::new(Square::G1, Square::F3, None));
+        position.play_move_inplace(Move::new(Square::G1, Square::F3, None));
         assert_eq!(
             position,
             ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ")
@@ -778,7 +779,7 @@ mod test {
 
         let capture = Move::new(Square::H1, Square::H8, None);
 
-        position.play_move(capture);
+        position.play_move_inplace(capture);
         assert_eq!(position, expected);
     }
 
@@ -788,13 +789,13 @@ mod test {
         let mut position = ChessBoard::default();
         // Modify it to account for e4 move
         let move_1 = Move::new(Square::E2, Square::E4, None);
-        let state_1 = position.play_move(move_1);
+        let state_1 = position.play_move_inplace(move_1);
         // And now c5
         let move_2 = Move::new(Square::C7, Square::C5, None);
-        let state_2 = position.play_move(move_2);
+        let state_2 = position.play_move_inplace(move_2);
         // Finally, Nf3
         let move_3 = Move::new(Square::G1, Square::F3, None);
-        let state_3 = position.play_move(move_3);
+        let state_3 = position.play_move_inplace(move_3);
         // Now revert each move one-by-one
         position.unplay_move(move_3, state_3);
         assert_eq!(
@@ -824,7 +825,7 @@ mod test {
 
         let capture = Move::new(Square::D1, Square::D8, None);
 
-        let state = position.play_move(capture);
+        let state = position.play_move_inplace(capture);
         assert_eq!(position, expected);
 
         position.unplay_move(capture, state);
