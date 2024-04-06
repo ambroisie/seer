@@ -131,6 +131,20 @@ impl ChessBoard {
         self.combined_occupancy ^= square;
     }
 
+    /// Compute the change of [CastleRights] from moving/taking a piece.
+    fn update_castling(&mut self, color: Color, piece: Piece, file: File) {
+        let original = self.castle_rights(color);
+        let new_rights = match (piece, file) {
+            (Piece::Rook, File::A) => original.without_queen_side(),
+            (Piece::Rook, File::H) => original.without_king_side(),
+            (Piece::King, _) => CastleRights::NoSide,
+            _ => return,
+        };
+        if new_rights != original {
+            *self.castle_rights_mut(color) = new_rights;
+        }
+    }
+
     /// Play the given [Move], return a copy of the board with the resulting state.
     #[inline(always)]
     pub fn play_move(&self, chess_move: Move) -> Self {
@@ -177,22 +191,11 @@ impl ChessBoard {
         } else {
             self.en_passant = None;
         }
-        let castle_rights = self.castle_rights_mut(self.current_player());
-        *castle_rights = match (move_piece, chess_move.start().file()) {
-            (Piece::Rook, File::A) => castle_rights.without_queen_side(),
-            (Piece::Rook, File::H) => castle_rights.without_king_side(),
-            (Piece::King, _) => CastleRights::NoSide,
-            _ => *castle_rights,
-        };
+        self.update_castling(self.current_player(), move_piece, chess_move.start().file());
         if let Some(piece) = captured_piece {
             self.xor(opponent, piece, chess_move.destination());
             // If a rook is captured, it loses its castling rights
-            let castle_rights = self.castle_rights_mut(opponent);
-            *castle_rights = match (piece, chess_move.destination().file()) {
-                (Piece::Rook, File::A) => castle_rights.without_queen_side(),
-                (Piece::Rook, File::H) => castle_rights.without_king_side(),
-                _ => *castle_rights,
-            };
+            self.update_castling(opponent, piece, chess_move.destination().file());
         }
 
         // Revertible state modification
