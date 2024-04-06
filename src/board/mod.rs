@@ -27,3 +27,6 @@ pub use rank::*;
 
 pub mod square;
 pub use square::*;
+
+pub mod zobrist;
+pub use zobrist::*;
