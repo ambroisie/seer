@@ -17,6 +17,18 @@ impl CastleRights {
     /// The number of [CastleRights] variants.
     pub const NUM_VARIANTS: usize = 4;
 
+    const ALL: [Self; Self::NUM_VARIANTS] = [
+        Self::NoSide,
+        Self::KingSide,
+        Self::QueenSide,
+        Self::BothSides,
+    ];
+
+    /// Iterate over all castle-rights variants.
+    pub fn iter() -> impl Iterator<Item = Self> {
+        Self::ALL.iter().cloned()
+    }
+
     /// Convert from a castle rights index into a [CastleRights] type.
     ///
     /// # Panics
