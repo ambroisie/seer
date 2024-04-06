@@ -21,8 +21,8 @@ pub enum FenError {
 impl std::fmt::Display for FenError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InvalidFen => write!(f, "Invalid FEN input"),
-            Self::InvalidPosition(err) => write!(f, "Invalid chess position: {}", err),
+            Self::InvalidFen => write!(f, "invalid FEN input"),
+            Self::InvalidPosition(err) => write!(f, "invalid chess position: {}", err),
         }
     }
 }
