@@ -132,6 +132,14 @@ impl ChessBoard {
         self.combined_occupancy ^= start_end;
     }
 
+    /// Play the given [Move], return a copy of the board with the resulting state.
+    #[inline(always)]
+    pub fn play_move(&self, chess_move: Move) -> Self {
+        let mut res = self.clone();
+        res.play_move_inplace(chess_move);
+        res
+    }
+
     /// Play the given [Move] in place, returning all non-revertible state (e.g: en-passant,
     /// etc...).
     #[inline(always)]
