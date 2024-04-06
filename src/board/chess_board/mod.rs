@@ -145,7 +145,6 @@ impl ChessBoard {
     #[inline(always)]
     pub fn play_move_inplace(&mut self, chess_move: Move) -> NonReversibleState {
         let opponent = !self.current_player();
-        let is_capture = !(self.combined_occupancy() & chess_move.destination()).is_empty();
         let move_piece = Piece::iter()
             .find(|&p| !(self.piece_occupancy(p) & chess_move.start()).is_empty())
             .unwrap();
@@ -165,7 +164,7 @@ impl ChessBoard {
         };
 
         // Non-revertible state modification
-        if is_capture || move_piece == Piece::Pawn {
+        if captured_piece.is_some() || move_piece == Piece::Pawn {
             self.half_move_clock = 0;
         } else {
             self.half_move_clock += 1;
