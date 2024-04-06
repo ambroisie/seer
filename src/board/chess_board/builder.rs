@@ -106,7 +106,7 @@ impl TryFrom<ChessBoardBuilder> for ChessBoard {
 
         let total_plies = (turn_count - 1) * 2 + if side == Color::White { 0 } else { 1 };
 
-        let board = ChessBoard {
+        let mut board = ChessBoard {
             piece_occupancy,
             color_occupancy,
             combined_occupancy,
@@ -115,7 +115,9 @@ impl TryFrom<ChessBoardBuilder> for ChessBoard {
             half_move_clock,
             total_plies,
             side,
+            hash: 0,
         };
+        board.hash = board.compute_hash();
 
         board.validate()?;
         Ok(board)

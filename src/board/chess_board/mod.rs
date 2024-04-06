@@ -1,6 +1,6 @@
 use crate::movegen;
 
-use super::{Bitboard, CastleRights, Color, File, Move, Piece, Rank, Square};
+use super::{zobrist, Bitboard, CastleRights, Color, File, Move, Piece, Rank, Square};
 
 mod builder;
 pub use builder::*;
@@ -29,6 +29,8 @@ pub struct ChessBoard {
     total_plies: u32, // Should be plenty.
     /// The current player turn.
     side: Color,
+    /// Zobrist hash for the board.
+    hash: u64,
 }
 
 /// The state which can't be reversed when doing/un-doing a [Move].
@@ -123,12 +125,42 @@ impl ChessBoard {
         self.compute_checkers(self.current_player())
     }
 
+    /// Return the Zobrist hash for the board.
+    #[inline(always)]
+    pub fn hash(&self) -> u64 {
+        self.hash
+    }
+
+    /// Compute the Zobrist hash for the board.
+    fn compute_hash(&self) -> u64 {
+        let mut res = 0;
+
+        // The side-to-move is only toggled on Black, and otherwise 0.
+        if self.current_player() == Color::Black {
+            res ^= zobrist::side_to_move();
+        }
+        if let Some(square) = self.en_passant() {
+            res ^= zobrist::en_passant(square.file());
+        }
+        res ^= zobrist::castling_rights(self.castle_rights);
+        for piece in Piece::iter() {
+            for color in Color::iter() {
+                for square in self.occupancy(piece, color) {
+                    res ^= zobrist::moved_piece(color, piece, square);
+                }
+            }
+        }
+
+        res
+    }
+
     /// Quickly add/remove a piece on the [Bitboard]s that are part of the [ChessBoard] state.
     #[inline(always)]
     fn xor(&mut self, color: Color, piece: Piece, square: Square) {
         *self.piece_occupancy_mut(piece) ^= square;
         *self.color_occupancy_mut(color) ^= square;
         self.combined_occupancy ^= square;
+        self.hash ^= zobrist::moved_piece(color, piece, square);
     }
 
     /// Compute the change of [CastleRights] from moving/taking a piece.
@@ -140,9 +172,9 @@ impl ChessBoard {
             (Piece::King, _) => CastleRights::NoSide,
             _ => return,
         };
-        if new_rights != original {
-            *self.castle_rights_mut(color) = new_rights;
-        }
+        self.hash ^= zobrist::castling_rights(self.castle_rights);
+        *self.castle_rights_mut(color) = new_rights;
+        self.hash ^= zobrist::castling_rights(self.castle_rights);
     }
 
     /// Play the given [Move], return a copy of the board with the resulting state.
@@ -182,14 +214,26 @@ impl ChessBoard {
         } else {
             self.half_move_clock += 1;
         }
-        if is_double_step {
+        let en_passant = if is_double_step {
             let target_square = Square::new(
                 chess_move.destination().file(),
                 self.current_player().third_rank(),
             );
-            self.en_passant = Some(target_square);
+            Some(target_square)
         } else {
-            self.en_passant = None;
+            None
+        };
+        if self.en_passant() != en_passant {
+            self.hash ^= self
+                .en_passant()
+                .map(Square::file)
+                .map(zobrist::en_passant)
+                .unwrap_or(0);
+            self.hash ^= en_passant
+                .map(Square::file)
+                .map(zobrist::en_passant)
+                .unwrap_or(0);
+            self.en_passant = en_passant;
         }
         self.update_castling(self.current_player(), move_piece, chess_move.start().file());
         if let Some(piece) = captured_piece {
@@ -203,6 +247,7 @@ impl ChessBoard {
         self.xor(self.current_player(), move_piece, chess_move.destination());
         self.total_plies += 1;
         self.side = !self.side;
+        self.hash ^= zobrist::side_to_move();
 
         state
     }
@@ -212,8 +257,24 @@ impl ChessBoard {
     #[inline(always)]
     pub fn unplay_move(&mut self, chess_move: Move, previous: NonReversibleState) {
         // Restore non-revertible state
-        self.castle_rights = previous.castle_rights;
-        self.en_passant = previous.en_passant;
+        if self.castle_rights != previous.castle_rights {
+            self.hash ^= zobrist::castling_rights(self.castle_rights);
+            self.hash ^= zobrist::castling_rights(previous.castle_rights);
+            self.castle_rights = previous.castle_rights;
+        }
+        if self.en_passant != previous.en_passant {
+            self.hash ^= self
+                .en_passant()
+                .map(Square::file)
+                .map(zobrist::en_passant)
+                .unwrap_or(0);
+            self.hash ^= previous
+                .en_passant
+                .map(Square::file)
+                .map(zobrist::en_passant)
+                .unwrap_or(0);
+            self.en_passant = previous.en_passant;
+        }
         self.half_move_clock = previous.half_move_clock;
 
         let move_piece = Piece::iter()
@@ -231,6 +292,7 @@ impl ChessBoard {
         self.xor(!self.current_player(), move_piece, chess_move.start());
         self.total_plies -= 1;
         self.side = !self.side;
+        self.hash ^= zobrist::side_to_move();
     }
 
     /// Return true if the current state of the board looks valid, false if something is definitely
@@ -421,7 +483,7 @@ impl ChessBoard {
 /// "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" FEN string
 impl Default for ChessBoard {
     fn default() -> Self {
-        Self {
+        let mut res = Self {
             piece_occupancy: [
                 // King
                 Square::E1 | Square::E8,
@@ -449,7 +511,10 @@ impl Default for ChessBoard {
             half_move_clock: 0,
             total_plies: 0,
             side: Color::White,
-        }
+            hash: 0,
+        };
+        res.hash = res.compute_hash();
+        res
     }
 }
 
