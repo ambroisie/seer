@@ -116,12 +116,10 @@ impl TryInto<Square> for Bitboard {
     type Error = IntoSquareError;
 
     fn try_into(self) -> Result<Square, Self::Error> {
-        let index = match self.count() {
-            1 => self.0.trailing_zeros() as usize,
-            0 => return Err(IntoSquareError::EmptyBoard),
-            _ => return Err(IntoSquareError::TooManySquares),
-        };
-        Ok(Square::from_index(index))
+        if self.has_more_than_one() {
+            return Err(IntoSquareError::TooManySquares);
+        }
+        self.any_square().ok_or(IntoSquareError::EmptyBoard)
     }
 }
 
