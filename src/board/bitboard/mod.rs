@@ -75,6 +75,12 @@ impl Bitboard {
         (self.0 & (self.0.wrapping_sub(1))) != 0
     }
 
+    /// Return a [Square] from the board, or `None` if it is empty.
+    #[inline(always)]
+    pub fn any_square(self) -> Option<Square> {
+        Square::try_from_index(self.0.trailing_zeros() as usize)
+    }
+
     /// Iterate over the power-set of a given [Bitboard], yielding each possible sub-set of
     /// [Square] that belong to the [Bitboard]. In other words, generate all set of [Square] that
     /// contain all, some, or none of the [Square] that are in the given [Bitboard].
@@ -477,6 +483,23 @@ mod test {
                 .len(),
             1 << 8
         );
+    }
+
+    #[test]
+    fn any_square() {
+        for square in Square::iter() {
+            assert_eq!(square.into_bitboard().any_square(), Some(square));
+        }
+    }
+
+    #[test]
+    fn any_square_empty() {
+        assert!(Bitboard::EMPTY.any_square().is_none());
+    }
+
+    #[test]
+    fn any_square_full_board() {
+        assert!(Bitboard::ALL.any_square().is_some());
     }
 
     #[test]
