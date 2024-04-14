@@ -2,11 +2,11 @@
 /// [Bitboard].
 use crate::board::Bitboard;
 
-pub struct BitboardIterator(u64);
+pub struct BitboardIterator(Bitboard);
 
 impl BitboardIterator {
     pub fn new(board: Bitboard) -> Self {
-        Self(board.0)
+        Self(board)
     }
 }
 
@@ -14,17 +14,15 @@ impl Iterator for BitboardIterator {
     type Item = crate::board::Square;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.0 == 0 {
-            None
-        } else {
-            let lsb = self.0.trailing_zeros() as usize;
-            self.0 ^= 1 << lsb;
-            Some(crate::board::Square::from_index(lsb))
-        }
+        let res = self.0.any_square();
+        if let Some(square) = res {
+            self.0 ^= square;
+        };
+        res
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.0.count_ones() as usize;
+        let size = self.0.count() as usize;
 
         (size, Some(size))
     }
