@@ -199,8 +199,9 @@ impl ChessBoard {
         }
 
         // Revertible state modification
+        let dest_piece = chess_move.promotion().unwrap_or(move_piece);
         self.xor(self.current_player(), move_piece, chess_move.start());
-        self.xor(self.current_player(), move_piece, chess_move.destination());
+        self.xor(self.current_player(), dest_piece, chess_move.destination());
         self.total_plies += 1;
         self.side = !self.side;
 
@@ -227,8 +228,9 @@ impl ChessBoard {
         }
 
         // Restore revertible state
+        let start_piece = chess_move.promotion().map_or(move_piece, |_| Piece::Pawn);
         self.xor(!self.current_player(), move_piece, chess_move.destination());
-        self.xor(!self.current_player(), move_piece, chess_move.start());
+        self.xor(!self.current_player(), start_piece, chess_move.start());
         self.total_plies -= 1;
         self.side = !self.side;
     }
@@ -806,6 +808,21 @@ mod test {
         assert_eq!(position, expected);
 
         position.unplay_move(capture, state);
+        assert_eq!(position, original);
+    }
+
+    #[test]
+    fn play_move_undo_promotion() {
+        let mut position = ChessBoard::from_fen("7k/P7/8/8/8/8/8/K7 w - - 0 1").unwrap();
+        let expected = ChessBoard::from_fen("N6k/8/8/8/8/8/8/K7 b - - 0 1").unwrap();
+        let original = position.clone();
+
+        let promotion = Move::new(Square::A7, Square::A8, Some(Piece::Knight));
+
+        let state = position.play_move_inplace(promotion);
+        assert_eq!(position, expected);
+
+        position.unplay_move(promotion, state);
         assert_eq!(position, original);
     }
 }
